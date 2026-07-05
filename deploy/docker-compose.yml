@@ -1,0 +1,14 @@
+# Run from the repo root: docker compose -f deploy/docker-compose.yml up -d --build
+# On unraid: use the Compose Manager plugin, or build the image and add a
+# container template pointing at it. No env vars are needed — the HA URL and
+# token are configured per browser on first launch.
+services:
+  oranjehuis:
+    image: oranjehuis:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: oranjehuis
+    ports:
+      - '8090:80'
+    restart: unless-stopped

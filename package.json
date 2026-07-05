@@ -1,0 +1,22 @@
+{
+  "name": "oranjehuis-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "@preact/signals": "^2.0.0",
+    "hls.js": "^1.5.0",
+    "home-assistant-js-websocket": "^9.4.0",
+    "preact": "^10.25.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.0",
+    "typescript": "~5.7.0",
+    "vite": "^6.0.0"
+  }
+}

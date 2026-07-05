@@ -1,0 +1,36 @@
+:root {
+  color-scheme: dark;
+
+  /* dark theme (default — wall displays) */
+  --bg: #151312;
+  --surface: #201d1b;
+  --surface-2: #2a2623;
+  --border: #383330;
+  --text: #f2ede8;
+  --text-dim: #a89e95;
+  --accent: #f28c28;
+  --accent-dim: rgba(242, 140, 40, 0.16);
+  --green: #58b87f;
+  --yellow: #e6b84c;
+  --red: #e05d5d;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --nav-h: 58px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #f7f4f1;
+    --surface: #ffffff;
+    --surface-2: #efeae5;
+    --border: #ddd5cd;
+    --text: #262119;
+    --text-dim: #7c7268;
+    --accent: #d97613;
+    --accent-dim: rgba(217, 118, 19, 0.14);
+    --shadow: 0 4px 24px rgba(60, 40, 20, 0.12);
+  }
+}
