@@ -44,6 +44,18 @@ export default function SettingsView() {
 
       <section class={styles.section}>
         <h2>Theme</h2>
+        <p class={styles.dim}>Appearance</p>
+        <div class={styles.modeRow}>
+          {(['auto', 'dark', 'light'] as const).map((m) => (
+            <button
+              key={m}
+              class={`${styles.modeBtn}${s.colorMode === m ? ` ${styles.modeActive}` : ''}`}
+              onClick={() => updateSettings({ colorMode: m })}
+            >
+              {m === 'auto' ? 'Auto (device)' : m === 'dark' ? 'Dark' : 'Light'}
+            </button>
+          ))}
+        </div>
         <p class={styles.dim}>Accent color for this display.</p>
         <div class={styles.themeRow}>
           {themes.map((t) => (

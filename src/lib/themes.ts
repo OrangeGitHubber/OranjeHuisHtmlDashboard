@@ -23,3 +23,12 @@ export const themes: ThemeDef[] = [
 export function applyTheme(id: string): void {
   document.documentElement.dataset.theme = id;
 }
+
+/** 'auto' follows the OS; 'light'/'dark' force via [data-mode] on <html>. */
+export function applyColorMode(mode: string): void {
+  if (mode === 'light' || mode === 'dark') {
+    document.documentElement.dataset.mode = mode;
+  } else {
+    delete document.documentElement.dataset.mode;
+  }
+}

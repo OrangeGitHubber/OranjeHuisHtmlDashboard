@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import type { ElementProps } from '../grid/elements';
 import type { ClockOptions } from './ClockOptionsEditor';
 import styles from './elements.module.css';
@@ -14,6 +14,8 @@ const FONT_SIZES: Record<string, string> = {
 export default function ClockCard({ element }: ElementProps) {
   const o = (element.options ?? {}) as ClockOptions;
   const [now, setNow] = useState(() => new Date());
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
 
   useEffect(() => {
     let interval: number | undefined;
@@ -32,12 +34,25 @@ export default function ClockCard({ element }: ElementProps) {
     };
   }, []);
 
-  const timeStyle: Record<string, string> = {};
-  if (o.size && FONT_SIZES[o.size]) timeStyle.fontSize = FONT_SIZES[o.size];
+  // measure the card for auto font scaling (container-query units proved
+  // unreliable on some kiosk browsers)
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    setWidth(el.getBoundingClientRect().width);
+    const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const autoPx = Math.min(Math.max(width * 0.17, 20), 120);
+  const timeStyle: Record<string, string> = {
+    fontSize: o.size && FONT_SIZES[o.size] ? FONT_SIZES[o.size] : `${Math.round(autoPx)}px`,
+  };
   if (typeof o.color === 'string' && o.color) timeStyle.color = o.color;
 
   return (
-    <div class={`${styles.card} ${styles.clockCard}`}>
+    <div ref={cardRef} class={`${styles.card} ${styles.clockCard}`}>
       <span class={styles.clockTime} style={timeStyle}>
         {now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
       </span>

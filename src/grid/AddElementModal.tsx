@@ -57,7 +57,6 @@ export function AddElementModal({
   const [areaSel, setAreaSel] = useState<string | null>(null);
   const [labelSel, setLabelSel] = useState<string | null>(null);
   const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [expandedDevices, setExpandedDevices] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
@@ -168,72 +167,65 @@ export function AddElementModal({
 
   const allPickable: EntityEntry[] = loaded ? [...entitiesByArea.value.values()].flat() : [];
 
+  const matches = (en: EntityEntry): boolean => {
+    if (!q) return true;
+    if (entryName(en).toLowerCase().includes(q) || en.entity_id.toLowerCase().includes(q)) {
+      return true;
+    }
+    const dev = deviceOf(en);
+    return dev ? deviceName(dev).toLowerCase().includes(q) : false;
+  };
+
+  const searchBar = (placeholder: string) => (
+    <input
+      class={styles.searchInput}
+      type="search"
+      placeholder={placeholder}
+      value={query}
+      onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+    />
+  );
+
   /* ---------- per-tab content ---------- */
 
   let body = null;
   if (tab === 'devices') {
-    const matches = (en: EntityEntry): boolean => {
-      if (!q) return true;
-      if (entryName(en).toLowerCase().includes(q) || en.entity_id.toLowerCase().includes(q)) {
-        return true;
-      }
-      const dev = deviceOf(en);
-      return dev ? deviceName(dev).toLowerCase().includes(q) : false;
-    };
-    const groups: { areaId: string; name: string; list: EntityEntry[] }[] = [];
-    for (const [areaId, list] of entitiesByArea.value) {
-      const filtered = list.filter(matches);
-      if (filtered.length > 0) {
-        groups.push({ areaId, name: areaLabel(areaId), list: filtered });
-      }
-    }
+    // one flat, alphabetical device list — no area grouping
+    const list = allPickable.filter(matches);
     body = (
       <>
-        <input
-          class={styles.searchInput}
-          type="search"
-          placeholder="Search devices and entities…"
-          value={query}
-          onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
-        />
+        {searchBar('Search devices and entities…')}
         {!loaded && skeletons}
-        {loaded && groups.length === 0 && <p class={styles.noResults}>No devices match.</p>}
-        {groups.map((g) => {
-          const open = q !== '' || expanded.has(g.areaId);
-          return (
-            <div key={g.areaId} class={styles.areaGroup}>
-              <button
-                class={styles.areaHeader}
-                onClick={() => {
-                  const next = new Set(expanded);
-                  if (next.has(g.areaId)) next.delete(g.areaId);
-                  else next.add(g.areaId);
-                  setExpanded(next);
-                }}
-              >
-                <span>{g.name}</span>
-                <span class={styles.areaCount}>
-                  {g.list.length} {open ? '▾' : '▸'}
-                </span>
-              </button>
-              {open && rows(g.list)}
-            </div>
-          );
-        })}
+        {loaded && list.length === 0 && <p class={styles.noResults}>No devices match.</p>}
+        {loaded && list.length > 0 && rows(list)}
       </>
     );
   } else if (tab === 'areas') {
     if (!loaded) body = skeletons;
     else if (areaSel === null) {
+      const areaList = [...entitiesByArea.value.entries()].filter(
+        ([id]) => !q || areaLabel(id).toLowerCase().includes(q),
+      );
       body = (
-        <div class={styles.areaBtnList}>
-          {[...entitiesByArea.value.entries()].map(([id, list]) => (
-            <button key={id} class={styles.areaBtn} onClick={() => setAreaSel(id)}>
-              <span>{areaLabel(id)}</span>
-              <span class={styles.areaCount}>{list.length} ›</span>
-            </button>
-          ))}
-        </div>
+        <>
+          {searchBar('Search areas…')}
+          {areaList.length === 0 && <p class={styles.noResults}>No areas match.</p>}
+          <div class={styles.areaBtnList}>
+            {areaList.map(([id, list]) => (
+              <button
+                key={id}
+                class={styles.areaBtn}
+                onClick={() => {
+                  setAreaSel(id);
+                  setQuery('');
+                }}
+              >
+                <span>{areaLabel(id)}</span>
+                <span class={styles.areaCount}>{list.length} ›</span>
+              </button>
+            ))}
+          </div>
+        </>
       );
     } else {
       body = (
@@ -241,9 +233,10 @@ export function AddElementModal({
           <button class={styles.backBtn} onClick={() => setAreaSel(null)}>
             ‹ All areas
           </button>
+          {searchBar(`Search in ${areaLabel(areaSel)}…`)}
           <div class={styles.areaGroup}>
             <div class={styles.areaHeader}>{areaLabel(areaSel)}</div>
-            {rows(entitiesByArea.value.get(areaSel) ?? [])}
+            {rows((entitiesByArea.value.get(areaSel) ?? []).filter(matches))}
           </div>
         </>
       );
@@ -253,18 +246,30 @@ export function AddElementModal({
     else if (labels.value.length === 0) {
       body = <p class={styles.noResults}>No labels defined in Home Assistant.</p>;
     } else if (labelSel === null) {
+      const labelList = labels.value.filter((l) => !q || l.name.toLowerCase().includes(q));
       body = (
-        <div class={styles.areaBtnList}>
-          {labels.value.map((l) => {
-            const count = allPickable.filter((en) => effectiveLabels(en).includes(l.label_id)).length;
-            return (
-              <button key={l.label_id} class={styles.areaBtn} onClick={() => setLabelSel(l.label_id)}>
-                <span>{l.name}</span>
-                <span class={styles.areaCount}>{count} ›</span>
-              </button>
-            );
-          })}
-        </div>
+        <>
+          {searchBar('Search labels…')}
+          {labelList.length === 0 && <p class={styles.noResults}>No labels match.</p>}
+          <div class={styles.areaBtnList}>
+            {labelList.map((l) => {
+              const count = allPickable.filter((en) => effectiveLabels(en).includes(l.label_id)).length;
+              return (
+                <button
+                  key={l.label_id}
+                  class={styles.areaBtn}
+                  onClick={() => {
+                    setLabelSel(l.label_id);
+                    setQuery('');
+                  }}
+                >
+                  <span>{l.name}</span>
+                  <span class={styles.areaCount}>{count} ›</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
       );
     } else {
       const label = labels.value.find((l) => l.label_id === labelSel);
@@ -273,9 +278,12 @@ export function AddElementModal({
           <button class={styles.backBtn} onClick={() => setLabelSel(null)}>
             ‹ All labels
           </button>
+          {searchBar(`Search in ${label?.name ?? 'label'}…`)}
           <div class={styles.areaGroup}>
             <div class={styles.areaHeader}>{label?.name ?? labelSel}</div>
-            {rows(allPickable.filter((en) => effectiveLabels(en).includes(labelSel)))}
+            {rows(
+              allPickable.filter((en) => effectiveLabels(en).includes(labelSel)).filter(matches),
+            )}
           </div>
         </>
       );
@@ -307,7 +315,10 @@ export function AddElementModal({
   const tabBtn = (id: Tab, label: string) => (
     <button
       class={`${styles.tab}${tab === id ? ` ${styles.tabActive}` : ''}`}
-      onClick={() => setTab(id)}
+      onClick={() => {
+        setTab(id);
+        setQuery('');
+      }}
     >
       {label}
     </button>

@@ -26,6 +26,41 @@
 }
 
 /*
+ * Light mode applies when the OS prefers light AND the user hasn't forced
+ * dark ([data-mode] on <html>: 'light' forces light, 'dark' forces dark,
+ * absent = follow the OS). The two light blocks below must stay in sync.
+ */
+@media (prefers-color-scheme: light) {
+  :root:not([data-mode='dark']) {
+    color-scheme: light;
+    --bg: #f7f4f1;
+    --surface: #ffffff;
+    --surface-2: #efeae5;
+    --border: #ddd5cd;
+    --text: #262119;
+    --text-dim: #7c7268;
+    --accent: #d97613;
+    --accent-dim: rgba(217, 118, 19, 0.14);
+    --shadow: 0 4px 24px rgba(60, 40, 20, 0.12);
+    --shadow-sm: 0 2px 10px rgba(60, 40, 20, 0.08);
+  }
+}
+
+:root[data-mode='light'] {
+  color-scheme: light;
+  --bg: #f7f4f1;
+  --surface: #ffffff;
+  --surface-2: #efeae5;
+  --border: #ddd5cd;
+  --text: #262119;
+  --text-dim: #7c7268;
+  --accent: #d97613;
+  --accent-dim: rgba(217, 118, 19, 0.14);
+  --shadow: 0 4px 24px rgba(60, 40, 20, 0.12);
+  --shadow-sm: 0 2px 10px rgba(60, 40, 20, 0.08);
+}
+
+/*
  * Themes: only the accent family changes per theme; neutrals and status
  * colors are shared. Keep accents mid-lightness — several buttons render
  * dark #1d1206 text on var(--accent).
@@ -52,42 +87,46 @@
   --accent-dim: rgba(185, 138, 217, 0.16);
 }
 
-/* light-mode accents per theme (must come after the dark blocks above,
-   which outrank the base light :root override on specificity) */
+/* light-mode accents per theme — OS-driven (unless dark is forced)… */
 @media (prefers-color-scheme: light) {
-  :root[data-theme='ember'] {
+  :root:not([data-mode='dark'])[data-theme='ember'] {
     --accent: #c14e36;
     --accent-dim: rgba(193, 78, 54, 0.14);
   }
 
-  :root[data-theme='forest'] {
+  :root:not([data-mode='dark'])[data-theme='forest'] {
     --accent: #55913f;
     --accent-dim: rgba(85, 145, 63, 0.14);
   }
 
-  :root[data-theme='ocean'] {
+  :root:not([data-mode='dark'])[data-theme='ocean'] {
     --accent: #2d7fa8;
     --accent-dim: rgba(45, 127, 168, 0.14);
   }
 
-  :root[data-theme='plum'] {
+  :root:not([data-mode='dark'])[data-theme='plum'] {
     --accent: #9260b8;
     --accent-dim: rgba(146, 96, 184, 0.14);
   }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --bg: #f7f4f1;
-    --surface: #ffffff;
-    --surface-2: #efeae5;
-    --border: #ddd5cd;
-    --text: #262119;
-    --text-dim: #7c7268;
-    --accent: #d97613;
-    --accent-dim: rgba(217, 118, 19, 0.14);
-    --shadow: 0 4px 24px rgba(60, 40, 20, 0.12);
-    --shadow-sm: 0 2px 10px rgba(60, 40, 20, 0.08);
-  }
+/* …and forced-light (must mirror the media block above) */
+:root[data-mode='light'][data-theme='ember'] {
+  --accent: #c14e36;
+  --accent-dim: rgba(193, 78, 54, 0.14);
+}
+
+:root[data-mode='light'][data-theme='forest'] {
+  --accent: #55913f;
+  --accent-dim: rgba(85, 145, 63, 0.14);
+}
+
+:root[data-mode='light'][data-theme='ocean'] {
+  --accent: #2d7fa8;
+  --accent-dim: rgba(45, 127, 168, 0.14);
+}
+
+:root[data-mode='light'][data-theme='plum'] {
+  --accent: #9260b8;
+  --accent-dim: rgba(146, 96, 184, 0.14);
 }

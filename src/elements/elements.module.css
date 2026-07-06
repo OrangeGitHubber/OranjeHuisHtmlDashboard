@@ -157,11 +157,12 @@
 }
 
 .clockTime {
-  /* scales with the card width via container queries */
-  font-size: clamp(1.3rem, 17cqw, 6rem);
+  /* size comes inline (JS-measured auto or fixed option) */
+  color: var(--accent); /* theme accent by default; option overrides */
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  transition: color 0.25s ease;
 }
 
 .clockDate {

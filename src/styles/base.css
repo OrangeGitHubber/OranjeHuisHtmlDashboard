@@ -228,9 +228,13 @@ video {
 }
 
 @media (prefers-color-scheme: light) {
-  .page-bg {
+  :root:not([data-mode='dark']) .page-bg {
     filter: blur(var(--bg-blur, 14px)) brightness(1.05) saturate(0.9) opacity(0.45);
   }
+}
+
+:root[data-mode='light'] .page-bg {
+  filter: blur(var(--bg-blur, 14px)) brightness(1.05) saturate(0.9) opacity(0.45);
 }
 
 /* ---------- shared modal ---------- */

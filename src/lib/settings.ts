@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { applyTheme } from './themes';
+import { applyTheme, applyColorMode } from './themes';
 import type { GridElement, GridRect } from '../grid/types';
 import { GRID_COLS } from '../grid/types';
 import { findFreeSlot } from '../grid/layout';
@@ -33,6 +33,8 @@ export interface AppSettings {
   pages: PageDef[];
   /** Theme id from src/lib/themes.ts; unknown ids fall back to orange visually. */
   theme: string;
+  /** light/dark handling: follow the OS or force one */
+  colorMode: 'auto' | 'dark' | 'light';
   /** dim the display during the configured window */
   nightDim: boolean;
   /** window start/end, 'HH:MM' (may wrap past midnight) */
@@ -88,6 +90,7 @@ function defaults(): AppSettings {
     subtitle: 'Smart Dashboard',
     pages: [defaultMainPage(), defaultCamerasPage()],
     theme: 'orange',
+    colorMode: 'auto',
     nightDim: false,
     nightDimStart: '22:00',
     nightDimEnd: '07:00',
@@ -214,6 +217,7 @@ function normalize(raw: unknown): AppSettings {
     subtitle: typeof r.subtitle === 'string' ? r.subtitle : base.subtitle,
     pages: normalizePages(r.pages),
     theme: typeof r.theme === 'string' && r.theme ? r.theme : base.theme,
+    colorMode: r.colorMode === 'light' || r.colorMode === 'dark' ? r.colorMode : 'auto',
     nightDim: r.nightDim === true,
     nightDimStart: isTimeString(r.nightDimStart) ? r.nightDimStart : base.nightDimStart,
     nightDimEnd: isTimeString(r.nightDimEnd) ? r.nightDimEnd : base.nightDimEnd,
@@ -418,4 +422,5 @@ settings.subscribe((s) => {
 
 settings.subscribe((s) => {
   applyTheme(s.theme);
+  applyColorMode(s.colorMode);
 });
