@@ -35,7 +35,7 @@ export function subscribeForecast(
       ),
     )
     .then((u) => {
-      if (dead) u().catch(() => {});
+      if (dead) u();
       else unsub = u;
     })
     .catch((err) => {
@@ -43,10 +43,10 @@ export function subscribeForecast(
     });
 
   return () => {
-    dead = true;
-    if (unsub) {
-      unsub().catch(() => {});
-      unsub = null;
-    }
-  };
+  dead = true;
+  if (unsub) {
+    unsub();
+    unsub = null;
+  }
+};
 }
