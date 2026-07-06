@@ -1,17 +1,12 @@
-import { settings, updateSettings, setSelectedCalendars, setTheme } from '../../lib/settings';
+import { settings, updateSettings, setTheme } from '../../lib/settings';
 import { themes } from '../../lib/themes';
 import { loadConfig, setupRequested } from '../../lib/config';
-import { useEntitiesByDomain } from '../../lib/ha/entities';
-import { EntitySelect, EntityMultiSelect } from './EntitySelect';
 import { PagesEditor } from './PagesEditor';
 import { ExportImport } from './ExportImport';
 import styles from './settings.module.css';
 
 export default function SettingsView() {
   const s = settings.value;
-  const weatherEntities = useEntitiesByDomain('weather').value;
-  const persons = useEntitiesByDomain('person').value;
-  const calendars = useEntitiesByDomain('calendar').value;
   const cfg = loadConfig();
 
   return (
@@ -45,37 +40,6 @@ export default function SettingsView() {
           the page itself.
         </p>
         <PagesEditor />
-      </section>
-
-      <section class={styles.section}>
-        <h2>Weather</h2>
-        <p class={styles.dim}>Which weather entity powers the Weather widget.</p>
-        <EntitySelect
-          entities={weatherEntities}
-          value={s.weather.entityId}
-          onChange={(id) => updateSettings({ weather: { entityId: id } })}
-          noneLabel="None selected"
-        />
-      </section>
-
-      <section class={styles.section}>
-        <h2>People</h2>
-        <p class={styles.dim}>Who appears in the Family presence widget.</p>
-        <EntityMultiSelect
-          entities={persons}
-          selected={s.presence.personIds}
-          onChange={(ids) => updateSettings({ presence: { personIds: ids } })}
-        />
-      </section>
-
-      <section class={styles.section}>
-        <h2>Calendars</h2>
-        <p class={styles.dim}>Which calendars feed the week board on this display.</p>
-        <EntityMultiSelect
-          entities={calendars}
-          selected={s.calendars.selected}
-          onChange={setSelectedCalendars}
-        />
       </section>
 
       <section class={styles.section}>
@@ -140,7 +104,28 @@ export default function SettingsView() {
                 }}
               />
             </label>
+            <label class={styles.field}>
+              Resume after (min)
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={s.nightDimResume}
+                onChange={(e) => {
+                  const n = Math.round(Number((e.target as HTMLInputElement).value));
+                  updateSettings({
+                    nightDimResume: Number.isFinite(n) ? Math.min(Math.max(n, 1), 60) : 2,
+                  });
+                }}
+              />
+            </label>
           </div>
+        )}
+        {s.nightDim && (
+          <p class={styles.dim}>
+            Any touch, mouse or keyboard activity lifts the dimming; it returns after the
+            inactivity timeout.
+          </p>
         )}
       </section>
 

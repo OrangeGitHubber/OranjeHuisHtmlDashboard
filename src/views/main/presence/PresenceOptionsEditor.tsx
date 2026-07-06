@@ -86,9 +86,9 @@ export default function PresenceOptionsEditor({
             <button
               class={`${opt.segBtn}${personMode === 'global' ? ` ${opt.segActive}` : ''}`}
               onClick={() => set({ persons: undefined })}
-              title="Follow the selection in Settings → People"
+              title="This display's default people selection (all, unless configured before)"
             >
-              Global
+              Default
             </button>
             <button
               class={`${opt.segBtn}${personMode === 'all' ? ` ${opt.segActive}` : ''}`}

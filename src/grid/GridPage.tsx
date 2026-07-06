@@ -5,6 +5,7 @@ import {
   removeElement,
   renamePage,
   setPageBackground,
+  setPageBackgroundGlass,
 } from '../lib/settings';
 import { elementDefs } from './elements';
 import { AsyncView } from '../components/AsyncView';
@@ -315,6 +316,18 @@ export default function GridPage({ pageId }: { pageId: string }) {
             <p class={opt.dim}>
               <strong>Using an image from the internet:</strong> paste the full https:// URL.
             </p>
+            <label class={opt.row}>
+              Glassiness · {page.backgroundGlass ?? 50}%
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={page.backgroundGlass ?? 50}
+                onInput={(e) =>
+                  setPageBackgroundGlass(pageId, Number((e.target as HTMLInputElement).value))
+                }
+              />
+            </label>
             <div class={opt.footerRow}>
               <button
                 class={opt.removeBtn}

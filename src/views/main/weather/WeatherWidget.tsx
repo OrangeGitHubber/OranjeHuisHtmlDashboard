@@ -1,9 +1,9 @@
 import { useEntity } from '../../../lib/ha/entities';
 import { settings } from '../../../lib/settings';
-import { navigate } from '../../../lib/router';
 import { useForecast } from './useForecast';
 import { conditionIcon, conditionLabel } from './weatherIcons';
 import type { ForecastItem } from '../../../lib/ha/forecast';
+import type { ElementProps } from '../../../grid/elements';
 import styles from './weather.module.css';
 
 const SUPPORTS_DAILY = 1;
@@ -24,8 +24,11 @@ function dayLabel(item: ForecastItem, index: number): string {
   return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { weekday: 'short' });
 }
 
-export default function WeatherWidget() {
-  const entityId = settings.value.weather.entityId;
+export default function WeatherWidget({ element }: ElementProps) {
+  // per-instance entity, falling back to the legacy global setting
+  const own = element.options?.entityId;
+  const entityId =
+    typeof own === 'string' && own ? own : settings.value.weather.entityId;
   const entitySig = useEntity(entityId ?? '__none__');
   const entity = entityId ? entitySig.value : undefined;
 
@@ -47,8 +50,7 @@ export default function WeatherWidget() {
       <div class={styles.card}>
         <h2 class={styles.title}>Weather</h2>
         <div class={styles.hint}>
-          <p>No weather entity selected.</p>
-          <button onClick={() => navigate('settings')}>Open Settings</button>
+          <p>No weather entity selected — tap this card in page edit mode to pick one.</p>
         </div>
       </div>
     );

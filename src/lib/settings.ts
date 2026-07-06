@@ -22,6 +22,8 @@ export interface PageDef {
   elements: GridElement[];
   /** optional frosted background image URL ('/' paths resolve against the HA URL) */
   background?: string;
+  /** frosted-glass strength 0–100 (blur amount); default 50 */
+  backgroundGlass?: number;
 }
 
 export interface AppSettings {
@@ -38,6 +40,8 @@ export interface AppSettings {
   nightDimEnd: string;
   /** dim strength in percent (10–90) */
   nightDimAmount: number;
+  /** minutes of inactivity before dimming resumes after user activity */
+  nightDimResume: number;
   weather: { entityId: string | null };
   presence: { personIds: string[] | null };
   calendars: { selected: string[] | null };
@@ -88,6 +92,7 @@ function defaults(): AppSettings {
     nightDimStart: '22:00',
     nightDimEnd: '07:00',
     nightDimAmount: 40,
+    nightDimResume: 2,
     weather: { entityId: null },
     presence: { personIds: null },
     calendars: { selected: null },
@@ -158,6 +163,9 @@ function normalizePages(raw: unknown): PageDef[] {
         ...(typeof pg.background === 'string' && pg.background
           ? { background: pg.background }
           : {}),
+        ...(typeof pg.backgroundGlass === 'number' && Number.isFinite(pg.backgroundGlass)
+          ? { backgroundGlass: Math.min(Math.max(Math.round(pg.backgroundGlass), 0), 100) }
+          : {}),
       });
     }
   }
@@ -213,6 +221,10 @@ function normalize(raw: unknown): AppSettings {
       typeof r.nightDimAmount === 'number' && Number.isFinite(r.nightDimAmount)
         ? Math.min(Math.max(Math.round(r.nightDimAmount), 10), 90)
         : base.nightDimAmount,
+    nightDimResume:
+      typeof r.nightDimResume === 'number' && Number.isFinite(r.nightDimResume)
+        ? Math.min(Math.max(Math.round(r.nightDimResume), 1), 60)
+        : base.nightDimResume,
     weather: {
       entityId:
         r.weather && typeof (r.weather as { entityId?: unknown }).entityId === 'string'
@@ -323,6 +335,10 @@ export function setPageBackground(pageId: string, url: string | undefined): void
     return next;
   });
   updateSettings({ pages });
+}
+
+export function setPageBackgroundGlass(pageId: string, glass: number): void {
+  patchPage(pageId, { backgroundGlass: Math.min(Math.max(Math.round(glass), 0), 100) });
 }
 
 export function movePage(pageId: string, dir: -1 | 1): void {

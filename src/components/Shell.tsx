@@ -2,6 +2,7 @@ import { settings } from '../lib/settings';
 import { currentRoute } from '../lib/router';
 import { loadConfig } from '../lib/config';
 import { minuteTick } from '../lib/clock';
+import { useIdle } from '../lib/useIdle';
 import { camerasLoader, settingsLoader } from '../views/registry';
 import { Nav } from './Nav';
 import { StatusBanner } from './StatusBanner';
@@ -24,11 +25,13 @@ export function Shell() {
 
   let content;
   let bg: string | null = null;
+  let glass = 50;
   if (route === 'settings') {
     content = <AsyncView key="settings" load={settingsLoader} />;
   } else {
     const page = pages.find((p) => p.id === route) ?? pages[0];
     bg = backgroundUrl(page.background);
+    glass = page.backgroundGlass ?? 50;
     content =
       page.kind === 'cameras' ? (
         <AsyncView key={page.id} load={camerasLoader} />
@@ -48,11 +51,21 @@ export function Shell() {
   const end = toMin(s.nightDimEnd);
   // window may wrap past midnight (22:00 → 07:00)
   const inWindow = start <= end ? cur >= start && cur < end : cur >= start || cur < end;
-  const nightDim = s.nightDim && inWindow;
+  // user activity lifts the dim; it returns after the configured idle time
+  const idle = useIdle(s.nightDimResume * 60_000);
+  const nightDim = s.nightDim && inWindow && idle;
 
   return (
     <div class="shell">
-      {bg && <div class="page-bg" style={{ backgroundImage: `url(${bg})` }} />}
+      {bg && (
+        <div
+          class="page-bg"
+          style={{
+            backgroundImage: `url(${bg})`,
+            '--bg-blur': `${Math.round((glass / 100) * 28)}px`,
+          }}
+        />
+      )}
       <StatusBanner />
       <Nav />
       <main class="shell-main">{content}</main>

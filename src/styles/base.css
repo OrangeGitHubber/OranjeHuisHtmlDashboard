@@ -221,14 +221,15 @@ video {
   z-index: -1;
   background-size: cover;
   background-position: center;
-  /* frosted: blurred, darkened, slightly oversized to hide blur edges */
-  filter: blur(14px) brightness(0.45) saturate(1.15);
+  /* frosted: blurred (strength from --bg-blur), darkened, slightly
+     oversized to hide blur edges */
+  filter: blur(var(--bg-blur, 14px)) brightness(0.45) saturate(1.15);
   transform: scale(1.08);
 }
 
 @media (prefers-color-scheme: light) {
   .page-bg {
-    filter: blur(14px) brightness(1.05) saturate(0.9) opacity(0.45);
+    filter: blur(var(--bg-blur, 14px)) brightness(1.05) saturate(0.9) opacity(0.45);
   }
 }
 

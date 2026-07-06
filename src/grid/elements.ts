@@ -68,8 +68,17 @@ export const elementDefs: Record<string, ElementDef> = {
     type: 'weather',
     title: 'Weather',
     load: () => import('../views/main/weather/WeatherWidget'),
+    optionsLoader: () => import('../elements/WeatherOptionsEditor'),
     defaultSize: { w: 6, h: 3 },
     minSize: { w: 4, h: 3 },
+  },
+  graph: {
+    type: 'graph',
+    title: 'History graph',
+    load: () => import('../elements/GraphCard'),
+    optionsLoader: () => import('../elements/GraphOptionsEditor'),
+    defaultSize: { w: 4, h: 3 },
+    minSize: { w: 2, h: 2 },
   },
   presence: {
     type: 'presence',

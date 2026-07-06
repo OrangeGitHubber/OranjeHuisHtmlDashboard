@@ -58,6 +58,7 @@ export function AddElementModal({
   const [labelSel, setLabelSel] = useState<string | null>(null);
   const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const [expandedDevices, setExpandedDevices] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     ensureRegistries();
@@ -87,31 +88,75 @@ export function AddElementModal({
     if (placed.length === 1 && onPlaced) onPlaced(placed[0]);
   };
 
-  const rows = (list: EntityEntry[], withDeviceHeadings: boolean) => (
-    <ul class={styles.entityList}>
-      {list.map((en, i) => {
-        const dev = deviceOf(en);
-        const dn = dev ? deviceName(dev) : '';
-        const prev = i > 0 ? list[i - 1] : undefined;
-        const prevDev = prev ? deviceOf(prev) : undefined;
-        const showDevice = withDeviceHeadings && dn !== '' && (!prevDev || deviceName(prevDev) !== dn);
-        return (
-          <li key={en.entity_id}>
-            {showDevice && <div class={styles.deviceHeading}>{dn}</div>}
-            <label class={styles.entityRow}>
-              <input
-                type="checkbox"
-                checked={checked.has(en.entity_id)}
-                onChange={() => toggleChecked(en.entity_id)}
-              />
-              <span class={styles.entityName}>{entryName(en)}</span>
-              <span class={styles.entityId}>{en.entity_id}</span>
-            </label>
-          </li>
-        );
-      })}
-    </ul>
+  const entityRow = (en: EntityEntry) => (
+    <label class={styles.entityRow}>
+      <input
+        type="checkbox"
+        checked={checked.has(en.entity_id)}
+        onChange={() => toggleChecked(en.entity_id)}
+      />
+      <span class={styles.entityName}>{entryName(en)}</span>
+      <span class={styles.entityId}>{en.entity_id}</span>
+    </label>
   );
+
+  /**
+   * Devices first: each named device is a collapsed row; tapping it reveals
+   * its entities. Entities without a (named) device show directly.
+   */
+  const rows = (list: EntityEntry[]) => {
+    const byDevice = new Map<string, { name: string; ents: EntityEntry[] }>();
+    const orphans: EntityEntry[] = [];
+    for (const en of list) {
+      const dev = deviceOf(en);
+      const dn = dev ? deviceName(dev) : '';
+      if (dev && dn) {
+        const g = byDevice.get(dev.id) ?? { name: dn, ents: [] };
+        g.ents.push(en);
+        byDevice.set(dev.id, g);
+      } else {
+        orphans.push(en);
+      }
+    }
+    const devices = [...byDevice.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name));
+    return (
+      <ul class={styles.entityList}>
+        {devices.map(([devId, g]) => {
+          const open = q !== '' || expandedDevices.has(devId);
+          const sel = g.ents.filter((e) => checked.has(e.entity_id)).length;
+          return (
+            <li key={devId}>
+              <button
+                class={styles.deviceRow}
+                onClick={() => {
+                  const next = new Set(expandedDevices);
+                  if (next.has(devId)) next.delete(devId);
+                  else next.add(devId);
+                  setExpandedDevices(next);
+                }}
+              >
+                <span class={styles.entityName}>{g.name}</span>
+                <span class={styles.areaCount}>
+                  {sel > 0 ? `${sel} ✓ · ` : ''}
+                  {g.ents.length} {open ? '▾' : '▸'}
+                </span>
+              </button>
+              {open && (
+                <ul class={styles.entitySub}>
+                  {g.ents.map((en) => (
+                    <li key={en.entity_id}>{entityRow(en)}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+        {orphans.map((en) => (
+          <li key={en.entity_id}>{entityRow(en)}</li>
+        ))}
+      </ul>
+    );
+  };
 
   const skeletons = (
     <>
@@ -127,14 +172,17 @@ export function AddElementModal({
 
   let body = null;
   if (tab === 'devices') {
+    const matches = (en: EntityEntry): boolean => {
+      if (!q) return true;
+      if (entryName(en).toLowerCase().includes(q) || en.entity_id.toLowerCase().includes(q)) {
+        return true;
+      }
+      const dev = deviceOf(en);
+      return dev ? deviceName(dev).toLowerCase().includes(q) : false;
+    };
     const groups: { areaId: string; name: string; list: EntityEntry[] }[] = [];
     for (const [areaId, list] of entitiesByArea.value) {
-      const filtered = q
-        ? list.filter(
-            (en) =>
-              entryName(en).toLowerCase().includes(q) || en.entity_id.toLowerCase().includes(q),
-          )
-        : list;
+      const filtered = list.filter(matches);
       if (filtered.length > 0) {
         groups.push({ areaId, name: areaLabel(areaId), list: filtered });
       }
@@ -168,7 +216,7 @@ export function AddElementModal({
                   {g.list.length} {open ? '▾' : '▸'}
                 </span>
               </button>
-              {open && rows(g.list, true)}
+              {open && rows(g.list)}
             </div>
           );
         })}
@@ -195,7 +243,7 @@ export function AddElementModal({
           </button>
           <div class={styles.areaGroup}>
             <div class={styles.areaHeader}>{areaLabel(areaSel)}</div>
-            {rows(entitiesByArea.value.get(areaSel) ?? [], true)}
+            {rows(entitiesByArea.value.get(areaSel) ?? [])}
           </div>
         </>
       );
@@ -227,10 +275,7 @@ export function AddElementModal({
           </button>
           <div class={styles.areaGroup}>
             <div class={styles.areaHeader}>{label?.name ?? labelSel}</div>
-            {rows(
-              allPickable.filter((en) => effectiveLabels(en).includes(labelSel)),
-              true,
-            )}
+            {rows(allPickable.filter((en) => effectiveLabels(en).includes(labelSel)))}
           </div>
         </>
       );

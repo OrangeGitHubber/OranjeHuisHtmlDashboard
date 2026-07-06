@@ -170,9 +170,9 @@ export default function CalendarOptionsEditor({
             <button
               class={`${opt.segBtn}${calMode === 'global' ? ` ${opt.segActive}` : ''}`}
               onClick={() => set({ calendars: undefined })}
-              title="Follow the selection in Settings → Calendars"
+              title="This display's default calendar selection (all, unless configured before)"
             >
-              Global
+              Default
             </button>
             <button
               class={`${opt.segBtn}${calMode === 'all' ? ` ${opt.segActive}` : ''}`}
