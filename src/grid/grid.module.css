@@ -60,6 +60,9 @@
   background-size: var(--cell-w, 48px) calc(var(--grid-row) + var(--grid-gap));
   background-position: -5px -5px;
   border-radius: var(--radius);
+  /* dragging must never start a text selection */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* ---------- items ---------- */

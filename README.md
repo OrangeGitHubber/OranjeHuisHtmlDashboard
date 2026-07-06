@@ -6,14 +6,23 @@ APIs; no backend.
 
 ## Features
 
-- **Main** — 7-day week calendar (today + 6 days, one column per day) aggregating a
-  configurable set of HA calendars (gear icon, stored per device); more sections coming
+- **User-defined pages** — the navigation is yours: add, rename, re-icon, and reorder
+  pages in Settings. Each page is a 12-column grid you lay out yourself: tap the ✎
+  button, then drag, resize (snap-to-grid), and delete elements freely. Layouts persist
+  per device and travel via Settings → Export/Import.
+- **Any HA entity as a card** — the Add dialog browses every entity grouped by HA Area,
+  searchable by name/id and filterable by HA Labels. Cards adapt to capabilities:
+  on/off-only lights toggle, dimmable/color lights get brightness, color-temperature and
+  color controls; climate gets target temp + HVAC modes; media players get transport +
+  volume; scenes/scripts/buttons fire on tap; sensors display live values.
+- **Widgets** — 7-day week calendar (configurable HA calendars), weather, and family
+  presence, placeable on any page like any other element
 - **Cameras** — auto-refreshing UniFi camera grid, tap for full-screen live stream (HLS)
-- **1st/2nd Floor, Outside, Automations, Stats** — placeholder views, coming next
+- **Themes** — five accent themes (Oranje default), switchable in Settings
 
 Dark theme by default (light follows the OS setting), bottom tabs on phones, sidebar on
-wide screens. Auto-reconnects forever — built to survive HA restarts and network drops
-without a reload.
+wide screens (pages stack single-column on narrow screens). Auto-reconnects forever —
+built to survive HA restarts and network drops without a reload.
 
 ## Development
 
@@ -49,15 +58,24 @@ docker compose -f deploy/docker-compose.yml up -d --build
 
 Serves on port `8090` either way.
 
-## Adding a view
+## Adding an element type
 
-1. Create a folder under `src/views/<name>/` with a default-exported component.
-2. Add one entry to `src/views/registry.ts` (id, title, icon path, `load` import).
+Pages and navigation are user data (settings v2, localStorage `oranjehuis.settings.v2`),
+so there is nothing to code for a new page. To add a new placeable element type:
 
-Navigation and code splitting follow automatically. Use the data layer in `src/lib/ha/`:
+1. Create the component (see `src/elements/EntityCard.tsx` for the entity card, or the
+   widgets under `src/views/main/`). It receives `{ pageId, element, editing }` props
+   (`element.options` holds per-instance config) — or no props at all.
+2. Add one entry to `elementDefs` in `src/grid/elements.ts` (type, title, module-level
+   `load` import, default/min size).
+
+Code splitting follows automatically. Use the data layer in `src/lib/ha/`:
 
 - `useEntity(id)` / `useEntitiesByDomain(domain)` — live entity signals (fine-grained;
   only components reading a changed entity re-render)
+- `callSvc(domain, service, data, target)` — fire HA service calls
+- `ensureRegistries()` + `areas/devices/entityEntries/labels` signals — HA registries,
+  loaded lazily (only the Add-element picker needs them)
 - `haFetch(path)` — authenticated REST
 - `getSignedUrl(path)` — signed URLs for authenticated media (`<img>`-safe)
 
@@ -65,6 +83,10 @@ Navigation and code splitting follow automatically. Use the data layer in `src/l
 
 - `src/lib/ha/connection.ts` — single WebSocket connection, retries forever, exposes a
   `connectionStatus` signal
-- No router library: `location.hash` ↔ `currentViewId` signal
+- No router library: `location.hash` ↔ `currentRoute` signal; Shell resolves the route
+  against `settings.pages` (unknown routes fall back to the first page)
+- No grid library: drag/resize is hand-rolled on pointer events with pointer capture;
+  positions are `{x, y, w, h}` grid cells (12 columns, 56px rows), free placement with
+  collision-blocked drops
 - `hls.js` is only loaded (as its own chunk) when a stream is opened
 - Camera snapshots are staggered and pause while the tab is hidden or HA is unreachable
