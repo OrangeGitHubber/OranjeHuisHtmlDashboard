@@ -1,6 +1,7 @@
 import { settings } from '../lib/settings';
 import { currentRoute } from '../lib/router';
 import { loadConfig } from '../lib/config';
+import { minuteTick } from '../lib/clock';
 import { camerasLoader, settingsLoader } from '../views/registry';
 import { Nav } from './Nav';
 import { StatusBanner } from './StatusBanner';
@@ -36,12 +37,16 @@ export function Shell() {
       );
   }
 
+  const hour = new Date(minuteTick.value).getHours();
+  const nightDim = settings.value.nightDim && (hour >= 22 || hour < 7);
+
   return (
     <div class="shell">
       {bg && <div class="page-bg" style={{ backgroundImage: `url(${bg})` }} />}
       <StatusBanner />
       <Nav />
       <main class="shell-main">{content}</main>
+      {nightDim && <div class="night-overlay" aria-hidden="true" />}
     </div>
   );
 }

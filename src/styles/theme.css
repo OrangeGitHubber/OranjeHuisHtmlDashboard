@@ -18,6 +18,7 @@
   --radius-sm: 8px;
   --nav-h: 58px;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.22);
 
   /* page-builder grid cell */
   --grid-row: 56px;
@@ -87,5 +88,6 @@
     --accent: #d97613;
     --accent-dim: rgba(217, 118, 19, 0.14);
     --shadow: 0 4px 24px rgba(60, 40, 20, 0.12);
+    --shadow-sm: 0 2px 10px rgba(60, 40, 20, 0.08);
   }
 }

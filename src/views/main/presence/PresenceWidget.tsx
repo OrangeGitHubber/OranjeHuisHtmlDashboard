@@ -18,6 +18,10 @@ export interface PresenceOptions {
   horizontal?: boolean;
   persons?: string[] | null;
   activity?: Record<string, string>;
+  /** personId → geocoded-location sensor; state is the street address */
+  geocode?: Record<string, string>;
+  /** show the address line when a person is away (not in a known zone) */
+  showAddress?: boolean;
 }
 
 export default function PresenceWidget({ element }: ElementProps) {
@@ -53,6 +57,8 @@ export default function PresenceWidget({ element }: ElementProps) {
               key={p.entity_id}
               entity={p}
               activityEntityId={o.activity?.[p.entity_id]}
+              geocodedEntityId={o.geocode?.[p.entity_id]}
+              showAddress={o.showAddress === true}
             />
           ))}
         </div>

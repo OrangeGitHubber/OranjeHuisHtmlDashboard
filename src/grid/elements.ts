@@ -56,6 +56,13 @@ export const elementDefs: Record<string, ElementDef> = {
     defaultSize: { w: 4, h: 3 },
     minSize: { w: 1, h: 1 },
   },
+  clock: {
+    type: 'clock',
+    title: 'Clock',
+    load: () => import('../elements/ClockCard'),
+    defaultSize: { w: 3, h: 2 },
+    minSize: { w: 1, h: 1 },
+  },
   weather: {
     type: 'weather',
     title: 'Weather',

@@ -31,6 +31,8 @@ export interface AppSettings {
   pages: PageDef[];
   /** Theme id from src/lib/themes.ts; unknown ids fall back to orange visually. */
   theme: string;
+  /** dim the display between 22:00 and 07:00 */
+  nightDim: boolean;
   weather: { entityId: string | null };
   presence: { personIds: string[] | null };
   calendars: { selected: string[] | null };
@@ -77,6 +79,7 @@ function defaults(): AppSettings {
     subtitle: 'Smart Dashboard',
     pages: [defaultMainPage(), defaultCamerasPage()],
     theme: 'orange',
+    nightDim: false,
     weather: { entityId: null },
     presence: { personIds: null },
     calendars: { selected: null },
@@ -191,6 +194,7 @@ function normalize(raw: unknown): AppSettings {
     subtitle: typeof r.subtitle === 'string' ? r.subtitle : base.subtitle,
     pages: normalizePages(r.pages),
     theme: typeof r.theme === 'string' && r.theme ? r.theme : base.theme,
+    nightDim: r.nightDim === true,
     weather: {
       entityId:
         r.weather && typeof (r.weather as { entityId?: unknown }).entityId === 'string'

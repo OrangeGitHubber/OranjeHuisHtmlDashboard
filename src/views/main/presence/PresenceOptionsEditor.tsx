@@ -17,10 +17,11 @@ export default function PresenceOptionsEditor({
 }) {
   const o = (element.options ?? {}) as PresenceOptions;
   const people = useEntitiesByDomain('person').value;
+  const sensors = useEntitiesByDomain('sensor').value;
   // companion-app activity sensors ("Activity" on iOS, "Detected activity" on Android)
-  const activitySensors = useEntitiesByDomain('sensor').value.filter((s) =>
-    s.entity_id.includes('activity'),
-  );
+  const activitySensors = sensors.filter((s) => s.entity_id.includes('activity'));
+  // companion-app "Geocoded Location" sensors — their state is the address
+  const geocodeSensors = sensors.filter((s) => s.entity_id.includes('geocoded'));
 
   const set = (patch: Partial<PresenceOptions>) =>
     updateElementOptions(pageId, element.id, patch);
@@ -43,6 +44,13 @@ export default function PresenceOptionsEditor({
     if (sensorId) cur[personId] = sensorId;
     else delete cur[personId];
     set({ activity: cur });
+  };
+
+  const setGeocode = (personId: string, sensorId: string) => {
+    const cur = { ...(o.geocode ?? {}) };
+    if (sensorId) cur[personId] = sensorId;
+    else delete cur[personId];
+    set({ geocode: cur });
   };
 
   return (
@@ -140,6 +148,51 @@ export default function PresenceOptionsEditor({
           <p class={opt.dim}>
             No activity sensors found (entity ids containing “activity”). Enable the Activity
             sensor in the HA companion app.
+          </p>
+        )}
+
+        <div class={opt.row}>
+          Street address when away
+          <div class={opt.seg}>
+            <button
+              class={`${opt.segBtn}${!o.showAddress ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showAddress: false })}
+            >
+              Hide
+            </button>
+            <button
+              class={`${opt.segBtn}${o.showAddress ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showAddress: true })}
+            >
+              Show
+            </button>
+          </div>
+          <span class={opt.dim}>
+            Uses each person's “Geocoded Location” sensor from the HA companion app; the address
+            shows on the card (and the map) when they're not in a known zone.
+          </span>
+        </div>
+        {o.showAddress &&
+          shown.map((p) => (
+            <label key={`geo-${p.entity_id}`} class={opt.row}>
+              {friendlyName(p)} — location sensor
+              <select
+                value={o.geocode?.[p.entity_id] ?? ''}
+                onChange={(e) => setGeocode(p.entity_id, (e.target as HTMLSelectElement).value)}
+              >
+                <option value="">None</option>
+                {geocodeSensors.map((s) => (
+                  <option key={s.entity_id} value={s.entity_id}>
+                    {friendlyName(s)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        {o.showAddress && geocodeSensors.length === 0 && (
+          <p class={opt.dim}>
+            No geocoded-location sensors found (entity ids containing “geocoded”). Enable the
+            Geocoded Location sensor in the HA companion app.
           </p>
         )}
 

@@ -95,6 +95,14 @@ export default function SettingsView() {
             </button>
           ))}
         </div>
+        <label class={styles.checkItem}>
+          <input
+            type="checkbox"
+            checked={s.nightDim}
+            onChange={(e) => updateSettings({ nightDim: (e.target as HTMLInputElement).checked })}
+          />
+          Dim the display at night (22:00 – 07:00)
+        </label>
       </section>
 
       <section class={styles.section}>

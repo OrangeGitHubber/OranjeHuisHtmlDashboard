@@ -11,9 +11,15 @@
   border-radius: var(--radius);
   padding: 12px 14px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
   transition:
     border-color 0.15s ease,
-    background 0.15s ease;
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tappable:hover {
+  box-shadow: var(--shadow);
 }
 
 .tappable {
@@ -139,6 +145,27 @@
 .chevron:hover {
   color: var(--text);
   background: var(--surface-2);
+}
+
+/* ---------- clock card ---------- */
+
+.clockCard {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.clockTime {
+  font-size: clamp(1.6rem, 6cqw, 3.2rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.clockDate {
+  font-size: 0.85rem;
+  color: var(--text-dim);
 }
 
 /* ---------- media card ---------- */

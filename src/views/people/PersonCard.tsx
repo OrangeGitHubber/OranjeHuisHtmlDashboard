@@ -4,6 +4,7 @@ import { getSignedUrl } from '../../lib/ha/signedPath';
 import { loadConfig } from '../../lib/config';
 import { useEntity } from '../../lib/ha/entities';
 import { minuteTick, relativeSince } from '../../lib/clock';
+import { PersonMapModal } from './PersonMapModal';
 import styles from './people.module.css';
 
 const CAR_ICON =
@@ -50,15 +51,27 @@ function initials(name: string): string {
 export function PersonCard({
   entity,
   activityEntityId,
+  geocodedEntityId,
+  showAddress,
 }: {
   entity: HassEntity;
   activityEntityId?: string;
+  /** companion-app "Geocoded Location" sensor; its state is the address */
+  geocodedEntityId?: string;
+  /** show the address line when the person is not in a known zone */
+  showAddress?: boolean;
 }) {
   const name = (entity.attributes.friendly_name as string | undefined) ?? entity.entity_id;
   const avatar = usePersonAvatar(entity);
   const now = minuteTick.value;
+  const [mapOpen, setMapOpen] = useState(false);
   const activity = activityEntityId ? useEntity(activityEntityId).value : undefined;
   const driving = activity !== undefined && DRIVING_STATES.has(activity.state.toLowerCase());
+  const geocoded = geocodedEntityId ? useEntity(geocodedEntityId).value : undefined;
+  const address =
+    geocoded && geocoded.state !== 'unavailable' && geocoded.state !== 'unknown'
+      ? geocoded.state
+      : null;
 
   const state = entity.state;
   const isHome = state === 'home';
@@ -68,26 +81,37 @@ export function PersonCard({
   const chipClass = isHome ? styles.chipHome : isAway ? styles.chipAway : styles.chipZone;
 
   return (
-    <div class={styles.card}>
-      {avatar ? (
-        <img class={styles.avatar} src={avatar} alt={name} />
-      ) : (
-        <div class={styles.avatarFallback}>{initials(name)}</div>
-      )}
-      <div class={styles.info}>
-        <span class={styles.name}>{name}</span>
-        <span class={styles.since}>{relativeSince(entity.last_changed, now)}</span>
+    <>
+      <div
+        class={styles.card}
+        onClick={() => setMapOpen(true)}
+        role="button"
+        aria-label={`Show ${name} on the map`}
+      >
+        {avatar ? (
+          <img class={styles.avatar} src={avatar} alt={name} />
+        ) : (
+          <div class={styles.avatarFallback}>{initials(name)}</div>
+        )}
+        <div class={styles.info}>
+          <span class={styles.name}>{name}</span>
+          <span class={styles.since}>{relativeSince(entity.last_changed, now)}</span>
+          {showAddress && isAway && address && <span class={styles.address}>{address}</span>}
+        </div>
+        {driving ? (
+          <span class={`${styles.chip} ${styles.chipDriving}`} title={`Driving · ${label}`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d={CAR_ICON} fill="currentColor" />
+            </svg>
+            Driving
+          </span>
+        ) : (
+          <span class={`${styles.chip} ${chipClass}`}>{label}</span>
+        )}
       </div>
-      {driving ? (
-        <span class={`${styles.chip} ${styles.chipDriving}`} title={`Driving · ${label}`}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d={CAR_ICON} fill="currentColor" />
-          </svg>
-          Driving
-        </span>
-      ) : (
-        <span class={`${styles.chip} ${chipClass}`}>{label}</span>
+      {mapOpen && (
+        <PersonMapModal entity={entity} address={address} onClose={() => setMapOpen(false)} />
       )}
-    </div>
+    </>
   );
 }

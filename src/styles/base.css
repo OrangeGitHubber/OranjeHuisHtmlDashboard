@@ -202,6 +202,17 @@ video {
   color: var(--text-dim);
 }
 
+/* ---------- night dimming ---------- */
+
+/* an overlay (not a filter) so position:fixed elements keep working */
+.night-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.38);
+  pointer-events: none;
+}
+
 /* ---------- per-page frosted background ---------- */
 
 .page-bg {
