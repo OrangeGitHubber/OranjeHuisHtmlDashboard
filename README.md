@@ -4,11 +4,12 @@ A fast, self-hosted dashboard for Home Assistant — built for wall-mounted disp
 phones. Static Preact + TypeScript app that talks directly to HA's WebSocket and REST
 APIs; no backend.
 
-## Features (v1)
+## Features
 
-- **Agenda** — 7-day view of all HA calendars
+- **Main** — 7-day week calendar (today + 6 days, one column per day) aggregating a
+  configurable set of HA calendars (gear icon, stored per device); more sections coming
 - **Cameras** — auto-refreshing UniFi camera grid, tap for full-screen live stream (HLS)
-- **People** — who's home, which zone, since when (live, no polling)
+- **1st/2nd Floor, Outside, Automations, Stats** — placeholder views, coming next
 
 Dark theme by default (light follows the OS setting), bottom tabs on phones, sidebar on
 wide screens. Auto-reconnects forever — built to survive HA restarts and network drops
