@@ -1,7 +1,12 @@
+import { signal } from '@preact/signals';
+
 export interface AppConfig {
   hassUrl: string;
   token: string;
 }
+
+/** true while the user is re-running the connection setup from Settings */
+export const setupRequested = signal(false);
 
 const STORAGE_KEY = 'oranjehuis.config.v1';
 

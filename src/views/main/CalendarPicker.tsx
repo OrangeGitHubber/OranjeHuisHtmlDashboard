@@ -1,4 +1,4 @@
-import { selectedCalendars, setSelectedCalendars } from '../../lib/prefs';
+import { settings, setSelectedCalendars } from '../../lib/settings';
 import { calendarColor } from './useCalendarEvents';
 import type { CalendarInfo } from '../../lib/types';
 import styles from './main.module.css';
@@ -10,7 +10,7 @@ export function CalendarPicker({
   calendars: CalendarInfo[];
   onClose: () => void;
 }) {
-  const sel = selectedCalendars.value;
+  const sel = settings.value.calendars.selected;
   const isChecked = (id: string) => sel === null || sel.includes(id);
 
   function toggle(id: string) {

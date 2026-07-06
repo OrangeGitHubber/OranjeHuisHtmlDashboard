@@ -1,0 +1,160 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  height: 100%;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--text-dim);
+}
+
+.hint {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  color: var(--text-dim);
+}
+
+.hint button {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.hintText {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+/* current conditions */
+
+.current {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.currentIcon {
+  flex: 0 0 auto;
+}
+
+.currentMain {
+  display: grid;
+}
+
+.temp {
+  font-size: 2.3rem;
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.tempUnit {
+  font-size: 1.2rem;
+  font-weight: 550;
+  color: var(--text-dim);
+}
+
+.condition {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.details {
+  margin-left: auto;
+  display: grid;
+  gap: 3px;
+  font-size: 0.8rem;
+}
+
+.details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.details dt {
+  color: var(--text-dim);
+}
+
+.details dd {
+  font-variant-numeric: tabular-nums;
+}
+
+/* daily strip */
+
+.dailyRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.dailyItem {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 7px 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 0.75rem;
+}
+
+.dailyDay {
+  font-weight: 650;
+}
+
+.dailyTemp {
+  font-variant-numeric: tabular-nums;
+}
+
+.dailyLow {
+  color: var(--text-dim);
+}
+
+.precip {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+}
+
+/* hourly strip */
+
+.hourlyScroll {
+  overflow-x: auto;
+}
+
+.hourlyRow {
+  display: flex;
+  gap: 6px;
+  min-width: max-content;
+}
+
+.hourlyItem {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 6px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.hourlyTemp {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hourlyHour {
+  white-space: nowrap;
+}

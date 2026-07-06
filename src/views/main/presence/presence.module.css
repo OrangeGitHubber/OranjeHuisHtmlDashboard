@@ -1,0 +1,42 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  height: 100%;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--text-dim);
+}
+
+.count {
+  margin-left: 10px;
+  font-size: 0.78rem;
+  font-weight: 550;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+}
+
+.hint {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  color: var(--text-dim);
+}
+
+.hint button {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+}

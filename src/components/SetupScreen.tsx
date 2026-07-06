@@ -7,7 +7,13 @@ import {
 } from 'home-assistant-js-websocket';
 import { loadConfig, normalizeHassUrl, saveConfig } from '../lib/config';
 
-export function SetupScreen({ authFailed }: { authFailed?: boolean }) {
+export function SetupScreen({
+  authFailed,
+  onCancel,
+}: {
+  authFailed?: boolean;
+  onCancel?: () => void;
+}) {
   const existing = loadConfig();
   const [url, setUrl] = useState(existing?.hassUrl ?? '');
   const [token, setToken] = useState('');
@@ -100,6 +106,11 @@ export function SetupScreen({ authFailed }: { authFailed?: boolean }) {
         <button type="submit" disabled={busy}>
           {busy ? 'Testing connection…' : 'Test & save'}
         </button>
+        {onCancel && (
+          <button type="button" class="setup-cancel" onClick={onCancel} disabled={busy}>
+            Cancel
+          </button>
+        )}
         <p class="setup-hint">
           Create a token in HA: <strong>Profile → Security → Long-lived access tokens</strong>. The
           REST API also needs this origin in <code>cors_allowed_origins</code> — see{' '}

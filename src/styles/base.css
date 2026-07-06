@@ -104,6 +104,16 @@ video {
   color: var(--accent);
 }
 
+/* brand block: desktop sidebar only */
+.nav-brand {
+  display: none;
+}
+
+/* settings pinned last; on mobile it's just another tab */
+.nav-bottom {
+  display: contents;
+}
+
 @media (min-width: 768px) {
   .shell {
     flex-direction: row;
@@ -116,7 +126,7 @@ video {
     flex-direction: column;
     justify-content: flex-start;
     gap: 6px;
-    width: 78px;
+    width: 92px;
     height: 100dvh;
     padding: 14px 10px;
     border-top: none;
@@ -131,6 +141,38 @@ video {
 
   .nav-item.active {
     background: var(--accent-dim);
+  }
+
+  .nav-brand {
+    display: grid;
+    justify-items: center;
+    gap: 1px;
+    text-align: center;
+    padding: 2px 2px 12px;
+  }
+
+  .nav-brand-title {
+    font-size: 0.82rem;
+    font-weight: 750;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .nav-brand-sub {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .nav-bottom {
+    display: block;
+    margin-top: auto;
+    width: 100%;
+  }
+
+  .nav-bottom .nav-item {
+    width: 100%;
   }
 
   .shell-main {
@@ -265,6 +307,15 @@ video {
 .setup-card button[type='submit']:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+
+.setup-cancel {
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
 }
 
 .setup-error {
