@@ -4,6 +4,7 @@ import type HlsType from 'hls.js';
 import { getConnection } from '../../lib/ha/connection';
 import { loadConfig } from '../../lib/config';
 import { Spinner } from '../../components/Spinner';
+import { useSnapshot } from './useSnapshot';
 import styles from './cameras.module.css';
 
 export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: () => void }) {
@@ -11,6 +12,12 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(true);
   const name = (entity.attributes.friendly_name as string | undefined) ?? entity.entity_id;
+  // fallback for cameras that can't stream: keep showing fresh snapshots
+  const { src: snapshotSrc } = useSnapshot(
+    entity.entity_id,
+    0,
+    entity.attributes.entity_picture as string | undefined,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -105,7 +112,13 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
               <Spinner />
             </div>
           )}
-          {error && <div class={styles.videoOverlay}>{error}</div>}
+          {error && snapshotSrc && (
+            <>
+              <img class={styles.fallbackSnap} src={snapshotSrc} alt={name} />
+              <div class={styles.fallbackNote}>Snapshots only — {error}</div>
+            </>
+          )}
+          {error && !snapshotSrc && <div class={styles.videoOverlay}>{error}</div>}
         </div>
       </div>
     </div>

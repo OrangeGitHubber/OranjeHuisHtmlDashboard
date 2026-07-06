@@ -239,7 +239,10 @@ video {
 .modal-panel {
   width: 100%;
   max-height: min(85dvh, 720px);
-  overflow-y: auto;
+  min-width: 280px;
+  min-height: 160px;
+  overflow: auto;
+  resize: both; /* user-resizable (drag the bottom-right corner) */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);

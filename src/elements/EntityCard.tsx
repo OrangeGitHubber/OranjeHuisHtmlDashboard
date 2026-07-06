@@ -4,6 +4,7 @@ import { useEntity } from '../lib/ha/entities';
 import { callSvc } from '../lib/ha/service';
 import { hasExtraControls } from './lightCaps';
 import { EntityDetailsModal } from './EntityDetailsModal';
+import { MdiIcon } from '../components/MdiIcon';
 import type { ElementProps } from '../grid/elements';
 import styles from './elements.module.css';
 
@@ -47,6 +48,57 @@ function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/**
+ * Default mdi icon names per domain/state, approximating HA's own defaults.
+ * Ordered fallback chains guard against renamed icons across mdi versions.
+ */
+function defaultIconNames(domain: string, entity: HassEntity): string[] {
+  const on = entity.state === 'on';
+  const dc = entity.attributes.device_class;
+  switch (domain) {
+    case 'light':
+      return on ? ['mdi:lightbulb-on', 'mdi:lightbulb'] : ['mdi:lightbulb'];
+    case 'switch':
+    case 'input_boolean':
+      return on
+        ? ['mdi:toggle-switch-variant', 'mdi:toggle-switch']
+        : ['mdi:toggle-switch-variant-off', 'mdi:toggle-switch-off'];
+    case 'lock':
+      return entity.state === 'locked' ? ['mdi:lock'] : ['mdi:lock-open-variant', 'mdi:lock-open'];
+    case 'scene':
+      return ['mdi:palette'];
+    case 'script':
+      return ['mdi:script-text'];
+    case 'button':
+      return ['mdi:gesture-tap-button', 'mdi:radiobox-marked'];
+    case 'media_player':
+      return ['mdi:speaker'];
+    case 'climate':
+      return ['mdi:thermostat'];
+    case 'cover':
+      return ['mdi:window-shutter'];
+    case 'fan':
+      return ['mdi:fan'];
+    case 'sensor':
+      if (dc === 'temperature') return ['mdi:thermometer'];
+      if (dc === 'humidity') return ['mdi:water-percent'];
+      if (dc === 'power') return ['mdi:flash'];
+      if (dc === 'energy') return ['mdi:lightning-bolt'];
+      if (dc === 'battery') return ['mdi:battery'];
+      if (dc === 'illuminance') return ['mdi:brightness-5'];
+      return [];
+    case 'binary_sensor':
+      if (dc === 'door') return on ? ['mdi:door-open'] : ['mdi:door-closed'];
+      if (dc === 'window')
+        return on ? ['mdi:window-open-variant', 'mdi:window-open'] : ['mdi:window-closed-variant', 'mdi:window-closed'];
+      if (dc === 'motion') return ['mdi:motion-sensor'];
+      if (dc === 'moisture') return ['mdi:water-alert'];
+      return [];
+    default:
+      return [];
+  }
+}
+
 function stateText(entity: HassEntity): string {
   const { state } = entity;
   if (state === 'unavailable') return 'Unavailable';
@@ -80,14 +132,18 @@ export default function EntityCard({ element }: ElementProps) {
   const locked = entity.state === 'locked';
   const name = friendlyName(entity);
 
-  // state-aware glyph + color: the icon (not the card shade) signals state
-  let glyph: string | undefined = GLYPHS[domain];
+  // state-aware icon + color: the icon (not the card shade) signals state.
+  // Icon source order: HA's configured icon (attributes.icon), then a
+  // per-domain default matching HA's own, then the built-in fallback path.
+  const haIcon = typeof entity.attributes.icon === 'string' ? [entity.attributes.icon] : [];
+  const iconNames = [...haIcon, ...defaultIconNames(domain, entity)];
+  let fallbackPath: string | undefined = GLYPHS[domain];
   let glyphCls = styles.glyph;
   let glyphStyle: Record<string, string> | undefined;
   if (domain === 'lock') {
-    glyph = locked ? LOCK_CLOSED : LOCK_OPEN;
+    fallbackPath = locked ? LOCK_CLOSED : LOCK_OPEN;
     glyphCls = `${styles.glyph} ${locked ? styles.glyphLocked : styles.glyphUnlocked}`;
-  } else if (TOGGLE_DOMAINS.has(domain) && isOn && !unavailable) {
+  } else if ((TOGGLE_DOMAINS.has(domain) || domain === 'binary_sensor') && isOn && !unavailable) {
     glyphCls = `${styles.glyph} ${styles.glyphOn}`;
     if (domain === 'light') {
       // tint the bulb with the light's actual color (HA derives rgb_color
@@ -98,6 +154,7 @@ export default function EntityCard({ element }: ElementProps) {
       }
     }
   }
+  const hasIcon = iconNames.length > 0 || fallbackPath !== undefined;
 
   const hasDetails =
     domain === 'climate' ||
@@ -163,12 +220,15 @@ export default function EntityCard({ element }: ElementProps) {
       <div class={styles.cardBottom}>
         {subText && <span class={styles.sub}>{subText}</span>}
         <div class={styles.cardTop}>
-          {glyph && (
-            <svg class={glyphCls} style={glyphStyle} viewBox="0 0 24 24" aria-hidden="true">
-              <path d={glyph} fill="currentColor" />
-            </svg>
+          {hasIcon && (
+            <MdiIcon
+              names={iconNames}
+              fallbackPath={fallbackPath}
+              class={glyphCls}
+              style={glyphStyle}
+            />
           )}
-          {domain === 'binary_sensor' && (
+          {domain === 'binary_sensor' && !hasIcon && (
             <span class={`${styles.dot}${isOn ? ` ${styles.dotOn}` : ''}`} />
           )}
           <span class={styles.state}>{mainText}</span>

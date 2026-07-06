@@ -207,3 +207,24 @@
   padding: 24px;
   text-align: center;
 }
+
+/* stream failed → auto-refreshing snapshot with a caption */
+.fallbackSnap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.fallbackNote {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.72);
+  color: var(--yellow);
+  font-size: 0.78rem;
+}

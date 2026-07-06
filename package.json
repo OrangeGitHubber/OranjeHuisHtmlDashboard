@@ -9,6 +9,7 @@
     "preview": "vite preview --host"
   },
   "dependencies": {
+    "@mdi/js": "^7.4.47",
     "@preact/signals": "^2.0.0",
     "hls.js": "^1.5.0",
     "home-assistant-js-websocket": "^9.4.0",

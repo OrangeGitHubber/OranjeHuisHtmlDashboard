@@ -102,10 +102,14 @@ export function AddElementModal({
   }
 
   const submit = () => {
+    const placed: string[] = [];
     for (const entityId of checked) {
-      placeElement(pageId, 'entity', { entityId });
+      const id = placeElement(pageId, 'entity', { entityId });
+      if (id) placed.push(id);
     }
     onClose();
+    // a single added card goes straight to its settings, like widgets do
+    if (placed.length === 1 && onPlaced) onPlaced(placed[0]);
   };
 
   return (

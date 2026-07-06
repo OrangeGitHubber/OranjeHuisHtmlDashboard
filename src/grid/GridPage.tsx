@@ -282,14 +282,19 @@ export default function GridPage({ pageId }: { pageId: string }) {
                 type="text"
                 value={page.background ?? ''}
                 placeholder="https://… or /local/wall.jpg (served by HA)"
-                onChange={(e) =>
-                  setPageBackground(pageId, (e.target as HTMLInputElement).value.trim() || undefined)
-                }
+                onChange={(e) => {
+                  // HA serves config/www at /local/ — auto-correct the common mistake
+                  const v = (e.target as HTMLInputElement).value
+                    .trim()
+                    .replace(/^\/config\/www\//, '/local/');
+                  setPageBackground(pageId, v || undefined);
+                }}
               />
             </label>
             <p class={opt.dim}>
-              Shown frosted (blurred and dimmed) behind this page. Paths starting with “/” load
-              from your Home Assistant, e.g. /local/wall.jpg from the config/www folder.
+              Shown frosted (blurred and dimmed) behind this page. Files in Home Assistant's
+              config/www folder are served at /local/… — e.g. config/www/wall.jpg →
+              /local/wall.jpg. (/config/www/… is corrected automatically.)
             </p>
             <div class={opt.footerRow}>
               <button

@@ -150,6 +150,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  /* always visible: stick to the bottom of the scrolling modal panel */
+  position: sticky;
+  bottom: 0;
+  margin: 0 -18px -18px;
+  padding: 12px 18px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
 }
 
 .doneBtn {
