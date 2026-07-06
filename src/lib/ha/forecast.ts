@@ -43,10 +43,10 @@ export function subscribeForecast(
     });
 
   return () => {
-  dead = true;
-  if (unsub) {
-    unsub();
-    unsub = null;
-  }
-};
+    dead = true;
+    if (unsub) {
+      unsub();
+      unsub = null;
+    }
+  };
 }
