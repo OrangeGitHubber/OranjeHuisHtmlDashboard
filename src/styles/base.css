@@ -237,8 +237,10 @@ video {
 }
 
 .modal-panel {
-  width: 100%;
-  max-height: min(85dvh, 720px);
+  /* initial size comes from the inline width; resize may grow it up to
+     nearly the whole viewport */
+  max-width: 96vw;
+  max-height: 92dvh;
   min-width: 280px;
   min-height: 160px;
   overflow: auto;

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { createPortal } from 'preact/compat';
 import type { HassEntity } from 'home-assistant-js-websocket';
 import type HlsType from 'hls.js';
 import { getConnection } from '../../lib/ha/connection';
@@ -96,7 +97,8 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
     };
   }, [entity.entity_id, onClose]);
 
-  return (
+  // portal: must paint above grid items regardless of where it's rendered
+  return createPortal(
     <div class={styles.modal} onClick={onClose}>
       <div class={styles.modalInner} onClick={(e) => e.stopPropagation()}>
         <header class={styles.modalHeader}>
@@ -121,6 +123,7 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
           {error && !snapshotSrc && <div class={styles.videoOverlay}>{error}</div>}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

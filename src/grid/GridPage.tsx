@@ -292,9 +292,16 @@ export default function GridPage({ pageId }: { pageId: string }) {
               />
             </label>
             <p class={opt.dim}>
-              Shown frosted (blurred and dimmed) behind this page. Files in Home Assistant's
-              config/www folder are served at /local/… — e.g. config/www/wall.jpg →
-              /local/wall.jpg. (/config/www/… is corrected automatically.)
+              The image is shown frosted (blurred and dimmed) behind everything on this page.
+            </p>
+            <p class={opt.dim}>
+              <strong>Using an image stored in Home Assistant:</strong> copy the file into the
+              “www” folder inside your HA config directory (create the folder and restart HA if
+              it's new), then enter <code>/local/your-image.jpg</code> here — HA serves the www
+              folder under /local/. Typing /config/www/… is corrected automatically.
+            </p>
+            <p class={opt.dim}>
+              <strong>Using an image from the internet:</strong> paste the full https:// URL.
             </p>
             <div class={opt.footerRow}>
               <button
