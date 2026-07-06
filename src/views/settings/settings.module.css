@@ -127,6 +127,45 @@
   cursor: default;
 }
 
+/* theme picker */
+
+.themeRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.themeSwatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.themeSwatch:hover {
+  color: var(--text);
+}
+
+.themeActive {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--accent-dim);
+}
+
+.themeDot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+}
+
 /* export / import */
 
 .exportImport {

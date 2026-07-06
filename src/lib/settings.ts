@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import { applyTheme } from './themes';
 
 /**
  * All dashboard configuration in one versioned, exportable object.
@@ -20,6 +21,8 @@ export interface AppSettings {
   subtitle: string;
   /** Main-screen widgets in render order */
   widgets: WidgetInstance[];
+  /** Theme id from src/lib/themes.ts; unknown ids fall back to orange visually. */
+  theme: string;
   weather: { entityId: string | null };
   presence: { personIds: string[] | null };
   calendars: { selected: string[] | null };
@@ -40,6 +43,7 @@ function defaults(): AppSettings {
     title: 'My Home',
     subtitle: 'Smart Dashboard',
     widgets: DEFAULT_WIDGETS.map((w) => ({ ...w })),
+    theme: 'orange',
     weather: { entityId: null },
     presence: { personIds: null },
     calendars: { selected: null },
@@ -91,6 +95,7 @@ function normalize(raw: unknown): AppSettings {
     title: typeof r.title === 'string' && r.title.trim() ? r.title : base.title,
     subtitle: typeof r.subtitle === 'string' ? r.subtitle : base.subtitle,
     widgets: normalizeWidgets(r.widgets),
+    theme: typeof r.theme === 'string' && r.theme ? r.theme : base.theme,
     weather: {
       entityId:
         r.weather && typeof (r.weather as { entityId?: unknown }).entityId === 'string'
@@ -150,6 +155,10 @@ export function setSelectedCalendars(ids: string[] | null): void {
   updateSettings({ calendars: { selected: ids } });
 }
 
+export function setTheme(id: string): void {
+  updateSettings({ theme: id });
+}
+
 export function toggleWidget(id: string): void {
   const s = settings.peek();
   updateSettings({
@@ -191,4 +200,8 @@ export function importSettings(json: string): { ok: true } | { ok: false; error:
 // keep the browser tab named after the household
 settings.subscribe((s) => {
   document.title = s.subtitle ? `${s.title} — ${s.subtitle}` : s.title;
+});
+
+settings.subscribe((s) => {
+  applyTheme(s.theme);
 });

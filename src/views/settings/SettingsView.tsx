@@ -1,4 +1,5 @@
-import { settings, updateSettings, setSelectedCalendars } from '../../lib/settings';
+import { settings, updateSettings, setSelectedCalendars, setTheme } from '../../lib/settings';
+import { themes } from '../../lib/themes';
 import { loadConfig, setupRequested } from '../../lib/config';
 import { useEntitiesByDomain } from '../../lib/ha/entities';
 import { EntitySelect, EntityMultiSelect } from './EntitySelect';
@@ -72,6 +73,25 @@ export default function SettingsView() {
           selected={s.calendars.selected}
           onChange={setSelectedCalendars}
         />
+      </section>
+
+      <section class={styles.section}>
+        <h2>Theme</h2>
+        <p class={styles.dim}>Accent color for this display.</p>
+        <div class={styles.themeRow}>
+          {themes.map((t) => (
+            <button
+              key={t.id}
+              class={`${styles.themeSwatch}${s.theme === t.id ? ` ${styles.themeActive}` : ''}`}
+              onClick={() => setTheme(t.id)}
+              aria-label={`Theme: ${t.name}`}
+              aria-pressed={s.theme === t.id}
+            >
+              <span class={styles.themeDot} style={{ background: t.swatch }} />
+              {t.name}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section class={styles.section}>
