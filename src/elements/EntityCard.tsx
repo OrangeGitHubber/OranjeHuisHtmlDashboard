@@ -24,6 +24,11 @@ const GLYPHS: Record<string, string> = {
 GLYPHS.input_boolean = GLYPHS.switch;
 GLYPHS.button = GLYPHS.switch;
 
+const LOCK_CLOSED =
+  'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z';
+const LOCK_OPEN =
+  'M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z';
+
 const CHEVRON = 'M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z';
 
 const TOGGLE_DOMAINS = new Set(['light', 'switch', 'input_boolean']);
@@ -38,6 +43,10 @@ export function friendlyName(entity: HassEntity): string {
   return typeof n === 'string' && n ? n : entity.entity_id;
 }
 
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 function stateText(entity: HassEntity): string {
   const { state } = entity;
   if (state === 'unavailable') return 'Unavailable';
@@ -46,7 +55,7 @@ function stateText(entity: HassEntity): string {
   if (typeof unit === 'string' && unit) return `${state} ${unit}`;
   if (state === 'on') return 'On';
   if (state === 'off') return 'Off';
-  return state.replace(/_/g, ' ');
+  return cap(state.replace(/_/g, ' '));
 }
 
 export default function EntityCard({ element }: ElementProps) {
@@ -68,8 +77,27 @@ export default function EntityCard({ element }: ElementProps) {
   const domain = entityId.split('.')[0];
   const unavailable = entity.state === 'unavailable';
   const isOn = entity.state === 'on';
+  const locked = entity.state === 'locked';
   const name = friendlyName(entity);
-  const glyph = GLYPHS[domain];
+
+  // state-aware glyph + color: the icon (not the card shade) signals state
+  let glyph: string | undefined = GLYPHS[domain];
+  let glyphCls = styles.glyph;
+  let glyphStyle: Record<string, string> | undefined;
+  if (domain === 'lock') {
+    glyph = locked ? LOCK_CLOSED : LOCK_OPEN;
+    glyphCls = `${styles.glyph} ${locked ? styles.glyphLocked : styles.glyphUnlocked}`;
+  } else if (TOGGLE_DOMAINS.has(domain) && isOn && !unavailable) {
+    glyphCls = `${styles.glyph} ${styles.glyphOn}`;
+    if (domain === 'light') {
+      // tint the bulb with the light's actual color (HA derives rgb_color
+      // for color-temp lights too, so warm/cold white shows as well)
+      const rgb = entity.attributes.rgb_color;
+      if (Array.isArray(rgb) && rgb.length >= 3) {
+        glyphStyle = { color: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` };
+      }
+    }
+  }
 
   const hasDetails =
     domain === 'climate' ||
@@ -80,6 +108,8 @@ export default function EntityCard({ element }: ElementProps) {
   if (!unavailable) {
     if (TOGGLE_DOMAINS.has(domain)) {
       onTap = () => callSvc('homeassistant', 'toggle', undefined, { entity_id: entityId });
+    } else if (domain === 'lock') {
+      onTap = () => callSvc('lock', locked ? 'unlock' : 'lock', undefined, { entity_id: entityId });
     } else if (ACTIVATE[domain]) {
       const [d, s] = ACTIVATE[domain];
       onTap = () => {
@@ -95,7 +125,6 @@ export default function EntityCard({ element }: ElementProps) {
   const cls = [
     styles.card,
     onTap ? styles.tappable : '',
-    isOn && TOGGLE_DOMAINS.has(domain) ? styles.active : '',
     unavailable ? styles.cardDead : '',
     flash ? styles.flash : '',
   ]
@@ -122,16 +151,6 @@ export default function EntityCard({ element }: ElementProps) {
     if (typeof b === 'number') mainText = `On · ${Math.round((b / 255) * 100)}%`;
   }
 
-  // tint the bulb with the light's actual color (HA also derives rgb_color
-  // for color-temp lights, so warm/cold white shows too)
-  let glyphStyle: Record<string, string> | undefined;
-  if (domain === 'light' && isOn) {
-    const rgb = entity.attributes.rgb_color;
-    if (Array.isArray(rgb) && rgb.length >= 3) {
-      glyphStyle = { color: `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` };
-    }
-  }
-
   return (
     <>
     <div
@@ -140,54 +159,56 @@ export default function EntityCard({ element }: ElementProps) {
       role={onTap ? 'button' : undefined}
       aria-label={name}
     >
-      <div class={styles.cardTop}>
-        {glyph && (
-          <svg class={styles.glyph} style={glyphStyle} viewBox="0 0 24 24" aria-hidden="true">
-            <path d={glyph} fill="currentColor" />
-          </svg>
-        )}
-        {domain === 'binary_sensor' && (
-          <span class={`${styles.dot}${isOn ? ` ${styles.dotOn}` : ''}`} />
-        )}
-        <span class={styles.state}>{mainText}</span>
-        {hasDetails && domain !== 'climate' && domain !== 'media_player' && (
-          <button
-            class={styles.chevron}
-            onClick={(e) => {
-              e.stopPropagation();
-              setDetails(true);
-            }}
-            aria-label={`More controls: ${name}`}
-          >
-            <svg viewBox="0 0 24 24">
-              <path d={CHEVRON} fill="currentColor" />
-            </svg>
-          </button>
-        )}
-        {domain === 'media_player' && !unavailable && (
-          <button
-            class={styles.chevron}
-            onClick={(e) => {
-              e.stopPropagation();
-              callSvc('media_player', 'media_play_pause', undefined, { entity_id: entityId });
-            }}
-            aria-label={`Play/pause: ${name}`}
-          >
-            <svg viewBox="0 0 24 24">
-              <path
-                d={
-                  entity.state === 'playing'
-                    ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'
-                    : 'M8 5v14l11-7z'
-                }
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-        )}
-      </div>
-      {subText && <span class={styles.sub}>{subText}</span>}
       <span class={styles.name}>{name}</span>
+      <div class={styles.cardBottom}>
+        {subText && <span class={styles.sub}>{subText}</span>}
+        <div class={styles.cardTop}>
+          {glyph && (
+            <svg class={glyphCls} style={glyphStyle} viewBox="0 0 24 24" aria-hidden="true">
+              <path d={glyph} fill="currentColor" />
+            </svg>
+          )}
+          {domain === 'binary_sensor' && (
+            <span class={`${styles.dot}${isOn ? ` ${styles.dotOn}` : ''}`} />
+          )}
+          <span class={styles.state}>{mainText}</span>
+          {hasDetails && domain !== 'climate' && domain !== 'media_player' && (
+            <button
+              class={styles.chevron}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDetails(true);
+              }}
+              aria-label={`More controls: ${name}`}
+            >
+              <svg viewBox="0 0 24 24">
+                <path d={CHEVRON} fill="currentColor" />
+              </svg>
+            </button>
+          )}
+          {domain === 'media_player' && !unavailable && (
+            <button
+              class={styles.chevron}
+              onClick={(e) => {
+                e.stopPropagation();
+                callSvc('media_player', 'media_play_pause', undefined, { entity_id: entityId });
+              }}
+              aria-label={`Play/pause: ${name}`}
+            >
+              <svg viewBox="0 0 24 24">
+                <path
+                  d={
+                    entity.state === 'playing'
+                      ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z'
+                      : 'M8 5v14l11-7z'
+                  }
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
     </div>
     {/* outside the card div: its clicks must not bubble into onTap */}
     {details && <EntityDetailsModal entityId={entityId} onClose={() => setDetails(false)} />}

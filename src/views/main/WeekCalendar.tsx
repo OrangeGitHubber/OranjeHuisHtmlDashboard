@@ -1,5 +1,6 @@
 import { useCalendarEvents, calendarColor } from './useCalendarEvents';
 import { settings } from '../../lib/settings';
+import { pageIcons } from '../../lib/icons';
 import type { CalendarEvent } from '../../lib/types';
 import type { ElementProps } from '../../grid/elements';
 import styles from './main.module.css';
@@ -17,6 +18,8 @@ import styles from './main.module.css';
  */
 export interface CalendarOptions {
   title?: string;
+  /** icon name from src/lib/icons.ts, shown before the title */
+  icon?: string;
   mode?: 'week' | 'agenda';
   days?: number;
   vertical?: boolean;
@@ -29,6 +32,7 @@ export function calendarOptionsOf(element: ElementProps['element']): Required<Ca
   const mode = o.mode === 'agenda' ? 'agenda' : 'week';
   return {
     mode,
+    icon: typeof o.icon === 'string' ? o.icon : '',
     title:
       typeof o.title === 'string' && o.title.trim()
         ? o.title
@@ -123,7 +127,14 @@ export function WeekCalendar({ element }: ElementProps) {
   return (
     <section class={styles.week}>
       <header class={styles.weekHeader}>
-        <h2 class={styles.weekTitle}>{opt.title}</h2>
+        <h2 class={styles.weekTitle}>
+          {opt.icon && pageIcons[opt.icon] && (
+            <svg class={styles.weekIcon} viewBox="0 0 24 24" aria-hidden="true">
+              <path d={pageIcons[opt.icon]} fill="currentColor" />
+            </svg>
+          )}
+          {opt.title}
+        </h2>
         <div class={styles.weekTools}>
           {error && lastFetched !== null && <span class={styles.offline}>offline</span>}
           {lastFetched !== null && (

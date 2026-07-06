@@ -46,7 +46,7 @@ export const elementDefs: Record<string, ElementDef> = {
     load: () => import('../elements/MediaCard'),
     optionsLoader: () => import('../elements/MediaOptionsEditor'),
     defaultSize: { w: 4, h: 3 },
-    minSize: { w: 2, h: 2 },
+    minSize: { w: 1, h: 1 },
   },
   camera: {
     type: 'camera',
@@ -54,7 +54,7 @@ export const elementDefs: Record<string, ElementDef> = {
     load: () => import('../elements/CameraCard'),
     optionsLoader: () => import('../elements/CameraOptionsEditor'),
     defaultSize: { w: 4, h: 3 },
-    minSize: { w: 2, h: 2 },
+    minSize: { w: 1, h: 1 },
   },
   weather: {
     type: 'weather',

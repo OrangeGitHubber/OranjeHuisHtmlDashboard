@@ -20,6 +20,8 @@ export interface PageDef {
   kind: 'grid' | 'cameras';
   /** ignored for kind 'cameras' */
   elements: GridElement[];
+  /** optional frosted background image URL ('/' paths resolve against the HA URL) */
+  background?: string;
 }
 
 export interface AppSettings {
@@ -138,6 +140,9 @@ function normalizePages(raw: unknown): PageDef[] {
         icon: typeof pg.icon === 'string' && pg.icon ? pg.icon : 'home',
         kind: pg.kind === 'cameras' ? 'cameras' : 'grid',
         elements: normalizeElements(pg.elements),
+        ...(typeof pg.background === 'string' && pg.background
+          ? { background: pg.background }
+          : {}),
       });
     }
   }
@@ -285,6 +290,17 @@ export function renamePage(pageId: string, title: string): void {
 
 export function setPageIcon(pageId: string, icon: string): void {
   patchPage(pageId, { icon });
+}
+
+export function setPageBackground(pageId: string, url: string | undefined): void {
+  const pages = settings.peek().pages.map((p) => {
+    if (p.id !== pageId) return p;
+    const next = { ...p };
+    if (url) next.background = url;
+    else delete next.background;
+    return next;
+  });
+  updateSettings({ pages });
 }
 
 export function movePage(pageId: string, dir: -1 | 1): void {

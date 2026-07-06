@@ -20,21 +20,36 @@ function entryName(en: EntityEntry): string {
   return en.name ?? en.original_name ?? en.entity_id;
 }
 
-function placeElement(pageId: string, type: string, options?: Record<string, unknown>): void {
+function placeElement(
+  pageId: string,
+  type: string,
+  options?: Record<string, unknown>,
+): string | null {
   const def = elementDefs[type];
   const page = settings.peek().pages.find((p) => p.id === pageId);
-  if (!def || !page) return;
+  if (!def || !page) return null;
   const slot = findFreeSlot(page.elements, def.defaultSize.w, def.defaultSize.h);
+  const id = newId('e');
   addElement(pageId, {
-    id: newId('e'),
+    id,
     type,
     ...slot,
     ...def.defaultSize,
     ...(options ? { options } : {}),
   });
+  return id;
 }
 
-export function AddElementModal({ pageId, onClose }: { pageId: string; onClose: () => void }) {
+export function AddElementModal({
+  pageId,
+  onClose,
+  onPlaced,
+}: {
+  pageId: string;
+  onClose: () => void;
+  /** called with the new element id when a just-added element should open its options */
+  onPlaced?: (elementId: string) => void;
+}) {
   const [tab, setTab] = useState<'entities' | 'widgets'>('entities');
   const [query, setQuery] = useState('');
   const [labelFilter, setLabelFilter] = useState<ReadonlySet<string>>(new Set());
@@ -206,8 +221,10 @@ export function AddElementModal({ pageId, onClose }: { pageId: string; onClose: 
                 <span>{d.title}</span>
                 <button
                   onClick={() => {
-                    placeElement(pageId, d.type);
+                    const id = placeElement(pageId, d.type);
                     onClose();
+                    // jump straight into the new element's settings
+                    if (id && d.optionsLoader && onPlaced) onPlaced(id);
                   }}
                 >
                   Add

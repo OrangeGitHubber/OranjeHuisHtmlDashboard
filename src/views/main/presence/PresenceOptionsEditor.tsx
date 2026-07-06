@@ -143,15 +143,20 @@ export default function PresenceOptionsEditor({
           </p>
         )}
 
-        <button
-          class={opt.removeBtn}
-          onClick={() => {
-            removeElement(pageId, element.id);
-            onClose();
-          }}
-        >
-          Remove element
-        </button>
+        <div class={opt.footerRow}>
+          <button
+            class={opt.removeBtn}
+            onClick={() => {
+              removeElement(pageId, element.id);
+              onClose();
+            }}
+          >
+            Remove element
+          </button>
+          <button class={opt.doneBtn} onClick={onClose}>
+            Done
+          </button>
+        </div>
       </div>
     </Modal>
   );

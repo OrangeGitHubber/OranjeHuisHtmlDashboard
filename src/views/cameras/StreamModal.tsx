@@ -48,13 +48,24 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
           });
           hls.on(Hls.Events.ERROR, (_ev, data) => {
             if (data.fatal && !cancelled) {
-              setError('The live stream failed. Check that the stream integration is enabled in Home Assistant.');
+              setError(
+                `The live stream failed (${data.type}: ${data.details}). If this is a network error, the HLS segments may not be reachable through your proxy.`,
+              );
             }
           });
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
-          setError('Could not start the live stream. Check that the stream integration is enabled in Home Assistant.');
+          // surface HA's actual error (e.g. "stream component not loaded")
+          const msg =
+            err instanceof Error
+              ? err.message
+              : err && typeof err === 'object' && 'message' in err
+                ? String((err as { message: unknown }).message)
+                : '';
+          setError(
+            `Could not start the live stream${msg ? ` — ${msg}` : ''}. Check that the stream integration is enabled in Home Assistant.`,
+          );
           setStarting(false);
         }
       }

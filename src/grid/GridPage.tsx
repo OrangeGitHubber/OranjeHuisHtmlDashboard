@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { settings, moveResizeElement, removeElement } from '../lib/settings';
+import { settings, moveResizeElement, removeElement, setPageBackground } from '../lib/settings';
 import { elementDefs } from './elements';
 import { AsyncView } from '../components/AsyncView';
 import { EmptyState } from '../components/EmptyState';
+import { Modal } from '../components/Modal';
 import { GridItem } from './GridItem';
 import { AddElementModal } from './AddElementModal';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { GRID_COLS, type GridRect } from './types';
 import { collides, stackOrder } from './layout';
+import opt from '../components/options.module.css';
 import styles from './grid.module.css';
 
 // must match --grid-row / --grid-gap in theme.css
@@ -42,6 +44,7 @@ export default function GridPage({ pageId }: { pageId: string }) {
   const narrow = useMediaQuery('(max-width: 699px)');
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [bgOpen, setBgOpen] = useState(false);
   const [optionsFor, setOptionsFor] = useState<string | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -158,6 +161,9 @@ export default function GridPage({ pageId }: { pageId: string }) {
           <button class={styles.addBtn} onClick={() => setAdding(true)}>
             ＋ Add
           </button>
+          <button class={styles.addBtn} onClick={() => setBgOpen(true)}>
+            Background…
+          </button>
           <span class={styles.toolbarTitle}>{page.title}</span>
           <button
             class={styles.doneBtn}
@@ -253,7 +259,55 @@ export default function GridPage({ pageId }: { pageId: string }) {
         </button>
       )}
 
-      {adding && <AddElementModal pageId={pageId} onClose={() => setAdding(false)} />}
+      {adding && (
+        <AddElementModal
+          pageId={pageId}
+          onClose={() => setAdding(false)}
+          onPlaced={(id) => setOptionsFor(id)}
+        />
+      )}
+
+      {bgOpen && (
+        <Modal onClose={() => setBgOpen(false)} maxWidth={440}>
+          <header class={opt.header}>
+            <span>Page background</span>
+            <button class={opt.close} onClick={() => setBgOpen(false)} aria-label="Close">
+              ✕
+            </button>
+          </header>
+          <div class={opt.form}>
+            <label class={opt.row}>
+              Image URL
+              <input
+                type="text"
+                value={page.background ?? ''}
+                placeholder="https://… or /local/wall.jpg (served by HA)"
+                onChange={(e) =>
+                  setPageBackground(pageId, (e.target as HTMLInputElement).value.trim() || undefined)
+                }
+              />
+            </label>
+            <p class={opt.dim}>
+              Shown frosted (blurred and dimmed) behind this page. Paths starting with “/” load
+              from your Home Assistant, e.g. /local/wall.jpg from the config/www folder.
+            </p>
+            <div class={opt.footerRow}>
+              <button
+                class={opt.removeBtn}
+                onClick={() => {
+                  setPageBackground(pageId, undefined);
+                  setBgOpen(false);
+                }}
+              >
+                Remove background
+              </button>
+              <button class={opt.doneBtn} onClick={() => setBgOpen(false)}>
+                Done
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {optionsFor &&
         (() => {

@@ -28,17 +28,14 @@
   transform: scale(0.985);
 }
 
-.active {
-  background: var(--accent-dim);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-}
-
-.active .glyph {
-  color: var(--accent);
-}
-
 .cardDead {
   opacity: 0.5;
+}
+
+.cardBottom {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .flash {
@@ -64,6 +61,20 @@
   width: 22px;
   height: 22px;
   color: var(--text-dim);
+  transition: color 0.2s ease;
+}
+
+/* the icon color signals state, not the card background */
+.glyphOn {
+  color: var(--accent);
+}
+
+.glyphLocked {
+  color: var(--green);
+}
+
+.glyphUnlocked {
+  color: var(--red);
 }
 
 .dot {

@@ -2,6 +2,7 @@ import { Modal } from '../../components/Modal';
 import { settings, updateElementOptions, removeElement } from '../../lib/settings';
 import { useEntitiesByDomain } from '../../lib/ha/entities';
 import { friendlyName } from '../settings/EntitySelect';
+import { pageIcons } from '../../lib/icons';
 import { calendarColor } from './useCalendarEvents';
 import type { GridElement } from '../../grid/types';
 import type { CalendarOptions } from './WeekCalendar';
@@ -69,6 +70,30 @@ export default function CalendarOptionsEditor({
             onInput={(e) => set({ title: (e.target as HTMLInputElement).value })}
           />
         </label>
+
+        <div class={opt.row}>
+          Icon
+          <div class={opt.iconRow}>
+            <button
+              class={`${opt.iconBtn}${!o.icon ? ` ${opt.iconBtnActive}` : ''}`}
+              onClick={() => set({ icon: undefined })}
+            >
+              None
+            </button>
+            {Object.entries(pageIcons).map(([name, path]) => (
+              <button
+                key={name}
+                class={`${opt.iconBtn}${o.icon === name ? ` ${opt.iconBtnActive}` : ''}`}
+                onClick={() => set({ icon: name })}
+                aria-label={`Icon: ${name}`}
+              >
+                <svg viewBox="0 0 24 24">
+                  <path d={path} fill="currentColor" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div class={opt.row}>
           Show
@@ -188,15 +213,20 @@ export default function CalendarOptionsEditor({
           </ul>
         )}
 
-        <button
-          class={opt.removeBtn}
-          onClick={() => {
-            removeElement(pageId, element.id);
-            onClose();
-          }}
-        >
-          Remove element
-        </button>
+        <div class={opt.footerRow}>
+          <button
+            class={opt.removeBtn}
+            onClick={() => {
+              removeElement(pageId, element.id);
+              onClose();
+            }}
+          >
+            Remove element
+          </button>
+          <button class={opt.doneBtn} onClick={onClose}>
+            Done
+          </button>
+        </div>
       </div>
     </Modal>
   );
