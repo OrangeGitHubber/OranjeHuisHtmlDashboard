@@ -3,7 +3,7 @@ import { themes } from '../../lib/themes';
 import { loadConfig, setupRequested } from '../../lib/config';
 import { useEntitiesByDomain } from '../../lib/ha/entities';
 import { EntitySelect, EntityMultiSelect } from './EntitySelect';
-import { WidgetListEditor } from './WidgetListEditor';
+import { PagesEditor } from './PagesEditor';
 import { ExportImport } from './ExportImport';
 import styles from './settings.module.css';
 
@@ -39,9 +39,12 @@ export default function SettingsView() {
       </section>
 
       <section class={styles.section}>
-        <h2>Main screen widgets</h2>
-        <p class={styles.dim}>Choose which widgets show on Main and in what order.</p>
-        <WidgetListEditor />
+        <h2>Pages</h2>
+        <p class={styles.dim}>
+          Add and arrange the pages in the navigation. Edit a page's layout with the ✎ button on
+          the page itself.
+        </p>
+        <PagesEditor />
       </section>
 
       <section class={styles.section}>

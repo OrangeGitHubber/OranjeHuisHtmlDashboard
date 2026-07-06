@@ -1,9 +1,18 @@
-import { views } from '../views/registry';
-import { currentViewId, navigate } from '../lib/router';
+import { currentRoute, navigate } from '../lib/router';
 import { settings } from '../lib/settings';
+import { iconPath, GEAR_ICON } from '../lib/icons';
 
-function NavButton({ id, title, icon }: { id: string; title: string; icon: string }) {
-  const active = currentViewId.value === id;
+function NavButton({
+  id,
+  title,
+  icon,
+  active,
+}: {
+  id: string;
+  title: string;
+  icon: string;
+  active: boolean;
+}) {
   return (
     <button
       class={`nav-item${active ? ' active' : ''}`}
@@ -20,8 +29,10 @@ function NavButton({ id, title, icon }: { id: string; title: string; icon: strin
 
 export function Nav() {
   const s = settings.value;
-  const mainViews = views.filter((v) => !v.hidden);
-  const settingsView = views.find((v) => v.id === 'settings');
+  const route = currentRoute.value;
+  // unknown routes render the first page (see Shell) — highlight it too
+  const activeId =
+    route === 'settings' || s.pages.some((p) => p.id === route) ? route : s.pages[0]?.id;
 
   return (
     <nav class="nav" aria-label="Main">
@@ -29,14 +40,18 @@ export function Nav() {
         <span class="nav-brand-title">{s.title}</span>
         {s.subtitle && <span class="nav-brand-sub">{s.subtitle}</span>}
       </div>
-      {mainViews.map((v) => (
-        <NavButton key={v.id} id={v.id} title={v.title} icon={v.icon} />
+      {s.pages.map((p) => (
+        <NavButton
+          key={p.id}
+          id={p.id}
+          title={p.title}
+          icon={iconPath(p.icon)}
+          active={activeId === p.id}
+        />
       ))}
-      {settingsView && (
-        <div class="nav-bottom">
-          <NavButton id={settingsView.id} title={settingsView.title} icon={settingsView.icon} />
-        </div>
-      )}
+      <div class="nav-bottom">
+        <NavButton id="settings" title="Settings" icon={GEAR_ICON} active={route === 'settings'} />
+      </div>
     </nav>
   );
 }

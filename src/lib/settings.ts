@@ -1,5 +1,8 @@
 import { signal } from '@preact/signals';
 import { applyTheme } from './themes';
+import type { GridElement, GridRect } from '../grid/types';
+import { GRID_COLS } from '../grid/types';
+import { findFreeSlot } from '../grid/layout';
 
 /**
  * All dashboard configuration in one versioned, exportable object.
@@ -8,19 +11,22 @@ import { applyTheme } from './themes';
  * The HA URL + token are deliberately NOT part of this (see config.ts).
  */
 
-export interface WidgetInstance {
+export interface PageDef {
+  /** hash route: #/<id>; never 'settings' (reserved) */
   id: string;
-  type: string;
-  enabled: boolean;
-  options?: Record<string, unknown>;
+  title: string;
+  /** icon NAME from src/lib/icons.ts */
+  icon: string;
+  kind: 'grid' | 'cameras';
+  /** ignored for kind 'cameras' */
+  elements: GridElement[];
 }
 
 export interface AppSettings {
-  version: 1;
+  version: 2;
   title: string;
   subtitle: string;
-  /** Main-screen widgets in render order */
-  widgets: WidgetInstance[];
+  pages: PageDef[];
   /** Theme id from src/lib/themes.ts; unknown ids fall back to orange visually. */
   theme: string;
   weather: { entityId: string | null };
@@ -28,21 +34,46 @@ export interface AppSettings {
   calendars: { selected: string[] | null };
 }
 
-const KEY = 'oranjehuis.settings.v1';
+const KEY = 'oranjehuis.settings.v2';
+// kept (not deleted) so a rollback to the previous image still finds its config
+const V1_KEY = 'oranjehuis.settings.v1';
 const LEGACY_CALENDARS_KEY = 'oranjehuis.selectedCalendars.v1';
 
-const DEFAULT_WIDGETS: WidgetInstance[] = [
-  { id: 'calendar', type: 'calendar', enabled: true },
-  { id: 'weather', type: 'weather', enabled: true },
-  { id: 'presence', type: 'presence', enabled: true },
-];
+export function newId(prefix: string): string {
+  return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** Sizes used when migrating v1 widgets and as add-defaults for widgets. */
+const WIDGET_SIZES: Record<string, { w: number; h: number }> = {
+  calendar: { w: 12, h: 4 },
+  weather: { w: 6, h: 3 },
+  presence: { w: 6, h: 3 },
+};
+
+function defaultMainPage(): PageDef {
+  return {
+    id: 'main',
+    title: 'Main',
+    icon: 'home',
+    kind: 'grid',
+    elements: [
+      { id: 'calendar', type: 'calendar', x: 0, y: 0, w: 12, h: 4 },
+      { id: 'weather', type: 'weather', x: 0, y: 4, w: 6, h: 3 },
+      { id: 'presence', type: 'presence', x: 6, y: 4, w: 6, h: 3 },
+    ],
+  };
+}
+
+function defaultCamerasPage(): PageDef {
+  return { id: 'cameras', title: 'Cameras', icon: 'camera', kind: 'cameras', elements: [] };
+}
 
 function defaults(): AppSettings {
   return {
-    version: 1,
+    version: 2,
     title: 'My Home',
     subtitle: 'Smart Dashboard',
-    widgets: DEFAULT_WIDGETS.map((w) => ({ ...w })),
+    pages: [defaultMainPage(), defaultCamerasPage()],
     theme: 'orange',
     weather: { entityId: null },
     presence: { personIds: null },
@@ -54,47 +85,106 @@ function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === 'string');
 }
 
-function normalizeWidgets(raw: unknown): WidgetInstance[] {
-  const out: WidgetInstance[] = [];
+function toInt(v: unknown): number | null {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null;
+}
+
+function normalizeElements(raw: unknown): GridElement[] {
+  const out: GridElement[] = [];
   const seen = new Set<string>();
-  if (Array.isArray(raw)) {
-    for (const w of raw) {
-      // keep entries with unknown types too — forward compatibility: configs
-      // from newer builds must survive an export/import round trip here
-      if (
-        w &&
-        typeof w === 'object' &&
-        typeof (w as WidgetInstance).id === 'string' &&
-        typeof (w as WidgetInstance).type === 'string' &&
-        !seen.has((w as WidgetInstance).id)
-      ) {
-        const wi = w as WidgetInstance;
-        seen.add(wi.id);
-        out.push({
-          id: wi.id,
-          type: wi.type,
-          enabled: !!wi.enabled,
-          ...(wi.options && typeof wi.options === 'object' ? { options: wi.options } : {}),
-        });
-      }
-    }
-  }
-  for (const def of DEFAULT_WIDGETS) {
-    if (!seen.has(def.id)) out.push({ ...def });
+  if (!Array.isArray(raw)) return out;
+  for (const e of raw) {
+    if (!e || typeof e !== 'object') continue;
+    const el = e as Record<string, unknown>;
+    if (typeof el.type !== 'string') continue;
+    const x = toInt(el.x);
+    const y = toInt(el.y);
+    const w = toInt(el.w);
+    const h = toInt(el.h);
+    if (x === null || y === null || w === null || h === null) continue;
+    let id = typeof el.id === 'string' && el.id ? el.id : newId('e');
+    while (seen.has(id)) id = newId('e');
+    seen.add(id);
+    const cw = Math.min(Math.max(w, 1), GRID_COLS);
+    out.push({
+      id,
+      // unknown types are kept — forward compatibility with newer builds
+      type: el.type,
+      x: Math.min(Math.max(x, 0), GRID_COLS - cw),
+      y: Math.max(y, 0),
+      w: cw,
+      h: Math.max(h, 1),
+      ...(el.options && typeof el.options === 'object'
+        ? { options: el.options as Record<string, unknown> }
+        : {}),
+    });
   }
   return out;
 }
 
+function normalizePages(raw: unknown): PageDef[] {
+  const out: PageDef[] = [];
+  const seen = new Set<string>();
+  if (Array.isArray(raw)) {
+    for (const p of raw) {
+      if (!p || typeof p !== 'object') continue;
+      const pg = p as Record<string, unknown>;
+      let id = typeof pg.id === 'string' && pg.id && pg.id !== 'settings' ? pg.id : newId('p');
+      while (seen.has(id)) id = newId('p');
+      seen.add(id);
+      out.push({
+        id,
+        title: typeof pg.title === 'string' && pg.title.trim() ? pg.title : 'Page',
+        icon: typeof pg.icon === 'string' && pg.icon ? pg.icon : 'home',
+        kind: pg.kind === 'cameras' ? 'cameras' : 'grid',
+        elements: normalizeElements(pg.elements),
+      });
+    }
+  }
+  if (out.length === 0) out.push(defaultMainPage(), defaultCamerasPage());
+  return out;
+}
+
+/** Converts a v1 settings object (widgets list) into the v2 pages shape. */
+function migrateV1(r: Record<string, unknown>): Record<string, unknown> {
+  const elements: GridElement[] = [];
+  const rawWidgets = Array.isArray(r.widgets) ? r.widgets : [];
+  for (const w of rawWidgets) {
+    if (!w || typeof w !== 'object') continue;
+    const wi = w as Record<string, unknown>;
+    const size = typeof wi.type === 'string' ? WIDGET_SIZES[wi.type] : undefined;
+    // unknown v1 widget types were never renderable — drop them
+    if (!size || !wi.enabled) continue;
+    const slot = findFreeSlot(elements, size.w, size.h);
+    elements.push({
+      id: typeof wi.id === 'string' ? wi.id : newId('e'),
+      type: wi.type as string,
+      ...slot,
+      ...size,
+      ...(wi.options && typeof wi.options === 'object'
+        ? { options: wi.options as Record<string, unknown> }
+        : {}),
+    });
+  }
+  const main: PageDef = { ...defaultMainPage(), elements };
+  if (elements.length === 0) main.elements = defaultMainPage().elements;
+  // drop the v1 'widgets' key so it doesn't linger in v2 exports via ...rest
+  const rest: Record<string, unknown> = { ...r };
+  delete rest.widgets;
+  return { ...rest, pages: [main, defaultCamerasPage()] };
+}
+
 /** Coerces arbitrary (imported) JSON into a valid AppSettings, preserving unknown keys. */
 function normalize(raw: unknown): AppSettings {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  let r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  if (r.version === 1 || !Array.isArray(r.pages)) r = migrateV1(r);
   const base = defaults();
   return {
     ...r, // preserve unknown top-level keys from newer versions
-    version: 1,
+    version: 2,
     title: typeof r.title === 'string' && r.title.trim() ? r.title : base.title,
     subtitle: typeof r.subtitle === 'string' ? r.subtitle : base.subtitle,
-    widgets: normalizeWidgets(r.widgets),
+    pages: normalizePages(r.pages),
     theme: typeof r.theme === 'string' && r.theme ? r.theme : base.theme,
     weather: {
       entityId:
@@ -118,9 +208,12 @@ function normalize(raw: unknown): AppSettings {
 function load(): AppSettings {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) {
-      localStorage.removeItem(LEGACY_CALENDARS_KEY);
-      return normalize(JSON.parse(raw));
+    if (raw) return normalize(JSON.parse(raw));
+    const v1 = localStorage.getItem(V1_KEY);
+    if (v1) {
+      const migrated = normalize(JSON.parse(v1));
+      localStorage.setItem(KEY, JSON.stringify(migrated));
+      return migrated;
     }
     const s = defaults();
     const legacy = localStorage.getItem(LEGACY_CALENDARS_KEY);
@@ -159,21 +252,73 @@ export function setTheme(id: string): void {
   updateSettings({ theme: id });
 }
 
-export function toggleWidget(id: string): void {
-  const s = settings.peek();
+/* ---------- pages ---------- */
+
+function patchPage(pageId: string, patch: Partial<PageDef>): void {
   updateSettings({
-    widgets: s.widgets.map((w) => (w.id === id ? { ...w, enabled: !w.enabled } : w)),
+    pages: settings.peek().pages.map((p) => (p.id === pageId ? { ...p, ...patch } : p)),
   });
 }
 
-export function moveWidget(id: string, dir: -1 | 1): void {
-  const widgets = [...settings.peek().widgets];
-  const i = widgets.findIndex((w) => w.id === id);
-  const j = i + dir;
-  if (i < 0 || j < 0 || j >= widgets.length) return;
-  [widgets[i], widgets[j]] = [widgets[j], widgets[i]];
-  updateSettings({ widgets });
+export function addPage(kind: 'grid' | 'cameras' = 'grid'): PageDef {
+  const page: PageDef = {
+    id: newId('p'),
+    title: kind === 'cameras' ? 'Cameras' : 'New page',
+    icon: kind === 'cameras' ? 'camera' : 'home',
+    kind,
+    elements: [],
+  };
+  updateSettings({ pages: [...settings.peek().pages, page] });
+  return page;
 }
+
+/** Refuses to remove the last page. Caller handles navigating away. */
+export function removePage(pageId: string): void {
+  const pages = settings.peek().pages;
+  if (pages.length <= 1) return;
+  updateSettings({ pages: pages.filter((p) => p.id !== pageId) });
+}
+
+export function renamePage(pageId: string, title: string): void {
+  patchPage(pageId, { title });
+}
+
+export function setPageIcon(pageId: string, icon: string): void {
+  patchPage(pageId, { icon });
+}
+
+export function movePage(pageId: string, dir: -1 | 1): void {
+  const pages = [...settings.peek().pages];
+  const i = pages.findIndex((p) => p.id === pageId);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= pages.length) return;
+  [pages[i], pages[j]] = [pages[j], pages[i]];
+  updateSettings({ pages });
+}
+
+/* ---------- elements ---------- */
+
+export function addElement(pageId: string, el: GridElement): void {
+  const page = settings.peek().pages.find((p) => p.id === pageId);
+  if (!page) return;
+  patchPage(pageId, { elements: [...page.elements, el] });
+}
+
+export function removeElement(pageId: string, elementId: string): void {
+  const page = settings.peek().pages.find((p) => p.id === pageId);
+  if (!page) return;
+  patchPage(pageId, { elements: page.elements.filter((e) => e.id !== elementId) });
+}
+
+export function moveResizeElement(pageId: string, elementId: string, rect: GridRect): void {
+  const page = settings.peek().pages.find((p) => p.id === pageId);
+  if (!page) return;
+  patchPage(pageId, {
+    elements: page.elements.map((e) => (e.id === elementId ? { ...e, ...rect } : e)),
+  });
+}
+
+/* ---------- export / import ---------- */
 
 export function exportSettings(): string {
   return JSON.stringify(settings.peek(), null, 2);

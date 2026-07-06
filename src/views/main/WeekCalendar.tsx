@@ -5,7 +5,7 @@ import { CalendarPicker } from './CalendarPicker';
 import type { CalendarEvent } from '../../lib/types';
 import styles from './main.module.css';
 
-import { GEAR_ICON } from '../registry';
+import { GEAR_ICON } from '../../lib/icons';
 
 interface Day {
   start: Date;

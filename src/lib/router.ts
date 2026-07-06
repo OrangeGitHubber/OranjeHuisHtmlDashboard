@@ -1,17 +1,21 @@
 import { signal } from '@preact/signals';
-import { views } from '../views/registry';
 
-function viewFromHash(): string {
-  const id = location.hash.replace(/^#\/?/, '');
-  return views.some((v) => v.id === id) ? id : views[0].id;
+/**
+ * Hash routing over settings-defined page ids. The raw hash is exposed as-is;
+ * Shell resolves it against settings.pages (falling back to the first page),
+ * so this module needs no knowledge of which pages exist.
+ */
+
+function routeFromHash(): string {
+  return location.hash.replace(/^#\/?/, '');
 }
 
-export const currentViewId = signal<string>(viewFromHash());
+export const currentRoute = signal<string>(routeFromHash());
 
 export function navigate(id: string): void {
   location.hash = `#/${id}`;
 }
 
 window.addEventListener('hashchange', () => {
-  currentViewId.value = viewFromHash();
+  currentRoute.value = routeFromHash();
 });
