@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import { createPortal } from 'preact/compat';
 import type { ComponentChildren } from 'preact';
 
@@ -27,14 +27,22 @@ export function Modal({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  // Close only when the press STARTED on the backdrop. Releasing a drag
+  // (e.g. the panel's resize handle) over the backdrop also fires a click
+  // there — that must not close the dialog.
+  const pressedBackdrop = useRef(false);
+
   return createPortal(
     // stopPropagation on the overlay too: a modal may logically belong to a
     // clickable card, and its clicks must never reach that card's handlers
     <div
       class="modal-overlay"
+      onPointerDown={(e) => {
+        pressedBackdrop.current = e.target === e.currentTarget;
+      }}
       onClick={(e) => {
         e.stopPropagation();
-        onClose();
+        if (pressedBackdrop.current && e.target === e.currentTarget) onClose();
       }}
     >
       <div

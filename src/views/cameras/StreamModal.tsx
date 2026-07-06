@@ -10,6 +10,7 @@ import styles from './cameras.module.css';
 
 export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const pressedBackdrop = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(true);
   const name = (entity.attributes.friendly_name as string | undefined) ?? entity.entity_id;
@@ -24,7 +25,21 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
     let cancelled = false;
     let hls: HlsType | null = null;
 
-    (async () => {
+    // CameraEntityFeature.STREAM = 2; without it a camera/stream request
+    // can only fail ("does not support play stream service")
+    const features =
+      typeof entity.attributes.supported_features === 'number'
+        ? entity.attributes.supported_features
+        : 0;
+    const canStream = (features & 2) !== 0;
+    if (!canStream) {
+      setError(
+        'This camera entity does not offer a live stream (in UniFi Protect, enable RTSPS for this channel, then reload the integration — or pick a streamable channel entity for this card).',
+      );
+      setStarting(false);
+    }
+
+    canStream && (async () => {
       try {
         const conn = await getConnection();
         const { url } = await conn.sendMessagePromise<{ url: string }>({
@@ -99,7 +114,15 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
 
   // portal: must paint above grid items regardless of where it's rendered
   return createPortal(
-    <div class={styles.modal} onClick={onClose}>
+    <div
+      class={styles.modal}
+      onPointerDown={(e) => {
+        pressedBackdrop.current = e.target === e.currentTarget;
+      }}
+      onClick={(e) => {
+        if (pressedBackdrop.current && e.target === e.currentTarget) onClose();
+      }}
+    >
       <div class={styles.modalInner} onClick={(e) => e.stopPropagation()}>
         <header class={styles.modalHeader}>
           <span>{name}</span>
