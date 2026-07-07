@@ -11,6 +11,12 @@ const HOP_BY_HOP = new Set([
   'proxy-authorization',
   'te',
   'trailer',
+  // Node's fetch already decompressed the body, so the original
+  // content-encoding/length no longer describe what we forward — dropping
+  // them makes the response chunked+identity (otherwise the browser tries
+  // to gunzip plain bytes and the fetch fails, looking like a CORS error)
+  'content-encoding',
+  'content-length',
 ]);
 
 function readBody(req) {
