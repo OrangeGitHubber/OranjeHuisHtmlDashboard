@@ -63,14 +63,22 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
     const canStream = (features & 2) !== 0;
 
     // ---- WebRTC (matches HA's frontend) ----
+    // Uses local refs and cleans up after itself on failure, handing the
+    // connection off to the effect-scope pc/unsub only on success.
     async function tryWebRTC(): Promise<boolean> {
       if (!video || typeof RTCPeerConnection === 'undefined') return false;
+      const localPc = new RTCPeerConnection({ iceServers: [] });
+      let localUnsub: (() => void) | null = null;
+      const giveUp = (): false => {
+        if (localUnsub) localUnsub();
+        localPc.close();
+        return false;
+      };
       try {
         const conn = await getConnection();
-        pc = new RTCPeerConnection({ iceServers: [] });
-        pc.addTransceiver('video', { direction: 'recvonly' });
-        pc.addTransceiver('audio', { direction: 'recvonly' });
-        pc.addEventListener('track', (ev) => {
+        localPc.addTransceiver('video', { direction: 'recvonly' });
+        localPc.addTransceiver('audio', { direction: 'recvonly' });
+        localPc.addEventListener('track', (ev) => {
           if (cancelled) return;
           if (video.srcObject !== ev.streams[0]) {
             video.srcObject = ev.streams[0];
@@ -78,24 +86,23 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
           }
         });
 
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
+        const offer = await localPc.createOffer();
+        await localPc.setLocalDescription(offer);
         // non-trickle: give ICE a moment to gather host candidates
         await new Promise<void>((res) => {
-          if (!pc || pc.iceGatheringState === 'complete') return res();
+          if (localPc.iceGatheringState === 'complete') return res();
           const t = window.setTimeout(res, 2000);
-          pc.addEventListener('icegatheringstatechange', () => {
-            if (pc && pc.iceGatheringState === 'complete') {
+          localPc.addEventListener('icegatheringstatechange', () => {
+            if (localPc.iceGatheringState === 'complete') {
               window.clearTimeout(t);
               res();
             }
           });
         });
-        if (cancelled || !pc) return false;
-        const sdp = pc.localDescription?.sdp;
-        if (!sdp) return false;
+        const sdp = localPc.localDescription?.sdp;
+        if (cancelled || !sdp) return giveUp();
 
-        return await new Promise<boolean>((resolve) => {
+        const answered = await new Promise<boolean>((resolve) => {
           let settled = false;
           const finish = (ok: boolean) => {
             if (!settled) {
@@ -106,14 +113,14 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
           conn
             .subscribeMessage<{ type: string; answer?: string; candidate?: string }>(
               (msg) => {
-                if (cancelled || !pc) return;
+                if (cancelled) return;
                 if (msg.type === 'answer' && msg.answer) {
-                  pc.setRemoteDescription({ type: 'answer', sdp: msg.answer }).catch(() => {});
+                  localPc.setRemoteDescription({ type: 'answer', sdp: msg.answer }).catch(() => {});
                   finish(true);
                 } else if (msg.type === 'candidate' && msg.candidate) {
-                  pc.addIceCandidate({ candidate: msg.candidate, sdpMLineIndex: 0 }).catch(
-                    () => {},
-                  );
+                  localPc
+                    .addIceCandidate({ candidate: msg.candidate, sdpMLineIndex: 0 })
+                    .catch(() => {});
                 } else if (msg.type === 'error') {
                   finish(false);
                 }
@@ -121,14 +128,20 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
               { type: 'camera/webrtc/offer', entity_id: entity.entity_id, offer: sdp },
             )
             .then((u) => {
-              unsub = u;
+              localUnsub = u;
             })
             .catch(() => finish(false)); // command unknown on old HA → fall back
           // no answer in time → abandon WebRTC, let HLS try
           window.setTimeout(() => finish(false), 6000);
         });
+
+        if (!answered || cancelled) return giveUp();
+        // success: hand off so the effect cleanup tears it down
+        pc = localPc;
+        unsub = localUnsub;
+        return true;
       } catch {
-        return false;
+        return giveUp();
       }
     }
 
@@ -194,17 +207,8 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
       }
       const rtcOk = await tryWebRTC();
       if (cancelled || started) return;
-      if (!rtcOk) {
-        if (pc) {
-          pc.close();
-          pc = null;
-        }
-        if (unsub) {
-          unsub();
-          unsub = null;
-        }
-        await tryHLS();
-      }
+      // tryWebRTC cleaned up after itself on failure; just fall back
+      if (!rtcOk) await tryHLS();
     })();
 
     const onKey = (e: KeyboardEvent) => {
