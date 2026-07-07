@@ -28,6 +28,14 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
   const setItems = (next: AlertItem[]) => set({ items: next });
   const patchItem = (id: string, patch: Partial<AlertItem>) =>
     setItems(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  const moveItem = (id: string, dir: -1 | 1) => {
+    const arr = [...items];
+    const i = arr.findIndex((it) => it.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    setItems(arr);
+  };
 
   return (
     <Modal onClose={onClose} maxWidth={540}>
@@ -50,9 +58,9 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
 
         {items.length > 0 && (
           <div class={opt.row}>
-            Rules — each card shows only while its condition holds
+            Rules — each card shows only while its condition holds; order = ribbon order
             <ul class={opt.checklist}>
-              {items.map((it) => (
+              {items.map((it, i) => (
                 <li key={it.id} class={opt.checkItem} style={{ cursor: 'default' }}>
                   <span class={opt.checkName} title={it.entityId}>
                     {it.entityId}
@@ -72,7 +80,7 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
                   {needsValue(it.op) && (
                     <input
                       type="text"
-                      style={{ width: '80px' }}
+                      style={{ width: '72px' }}
                       value={it.value ?? ''}
                       placeholder="value"
                       onInput={(e) =>
@@ -80,6 +88,37 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
                       }
                     />
                   )}
+                  <select
+                    value={it.size ?? ''}
+                    title="Card size"
+                    onChange={(e) => {
+                      const v = (e.target as HTMLSelectElement).value;
+                      patchItem(it.id, {
+                        size: v === 's' || v === 'm' || v === 'l' ? v : undefined,
+                      });
+                    }}
+                  >
+                    <option value="">Size</option>
+                    <option value="s">S</option>
+                    <option value="m">M</option>
+                    <option value="l">L</option>
+                  </select>
+                  <button
+                    class={opt.close}
+                    onClick={() => moveItem(it.id, -1)}
+                    disabled={i === 0}
+                    aria-label="Move left"
+                  >
+                    ◀
+                  </button>
+                  <button
+                    class={opt.close}
+                    onClick={() => moveItem(it.id, 1)}
+                    disabled={i === items.length - 1}
+                    aria-label="Move right"
+                  >
+                    ▶
+                  </button>
                   <button
                     class={opt.close}
                     onClick={() => setItems(items.filter((x) => x.id !== it.id))}

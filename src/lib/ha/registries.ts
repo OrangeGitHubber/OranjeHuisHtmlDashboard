@@ -30,6 +30,8 @@ export interface EntityEntry {
   labels: string[];
   name: string | null;
   original_name: string | null;
+  /** user-set icon override ('mdi:…'), when configured in HA */
+  icon?: string | null;
   disabled_by: string | null;
   hidden_by: string | null;
   entity_category: 'config' | 'diagnostic' | null;

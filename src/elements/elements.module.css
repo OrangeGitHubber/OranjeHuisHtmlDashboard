@@ -7,11 +7,11 @@
   justify-content: space-between;
   gap: 4px;
   background: var(--surface-card, var(--surface));
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card, var(--border));
   border-radius: var(--radius);
   padding: 12px 14px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card, var(--shadow-sm));
   transition:
     border-color 0.15s ease,
     background 0.15s ease,
@@ -181,17 +181,17 @@
   flex: 1;
   min-height: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
-  align-content: flex-start;
-  overflow-y: auto;
+  align-items: flex-start;
+  /* more cards than fit → scroll horizontally */
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
 }
 
 .alertItem {
-  flex: 1 1 200px;
-  max-width: 320px;
-  min-width: 160px;
-  height: 84px;
+  flex: 0 0 auto;
 }
 
 .alertClear {

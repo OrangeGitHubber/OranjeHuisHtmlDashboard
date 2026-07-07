@@ -13,6 +13,8 @@ export interface AlertItem {
   op: AlertOp;
   /** comparison value for gt/lt/eq/ne */
   value?: string;
+  /** per-card size override (falls back to the ribbon's cardSize) */
+  size?: 's' | 'm' | 'l';
 }
 
 export interface AlertRibbonOptions {
@@ -99,9 +101,6 @@ export default function AlertRibbon({ element }: ElementProps) {
     <div class={`${styles.card} ${styles.alertRibbon}`}>
       <div class={styles.graphHead}>
         <span class={`${styles.name} card-title`}>{title}</span>
-        <span class={styles.graphWindow}>
-          {items.length === 0 ? 'no rules' : `${active.length}/${items.length}`}
-        </span>
       </div>
       {items.length === 0 ? (
         <span class={styles.alertClear}>No alert rules — tap this card in page edit mode.</span>
@@ -110,12 +109,12 @@ export default function AlertRibbon({ element }: ElementProps) {
       ) : (
         <div class={styles.alertRow}>
           {active.map((it) => {
-            const size = CARD_SIZES[o.cardSize ?? 'm'] ?? CARD_SIZES.m;
+            const size = CARD_SIZES[it.size ?? o.cardSize ?? 'm'] ?? CARD_SIZES.m;
             return (
               <div
                 key={it.id}
                 class={styles.alertItem}
-                style={{ height: size.height, flexBasis: size.basis }}
+                style={{ height: size.height, width: size.basis }}
               >
                 <EntityCard pageId="" element={syntheticFor(it.entityId)} editing={false} />
               </div>

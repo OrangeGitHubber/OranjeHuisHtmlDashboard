@@ -214,6 +214,42 @@ export default function CalendarOptionsEditor({
           </ul>
         )}
 
+        <div class={opt.row}>
+          “Updated Xm ago” hint
+          <div class={opt.seg}>
+            <button
+              class={`${opt.segBtn}${o.showUpdated !== false ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showUpdated: undefined })}
+            >
+              Show
+            </button>
+            <button
+              class={`${opt.segBtn}${o.showUpdated === false ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showUpdated: false })}
+            >
+              Hide
+            </button>
+          </div>
+        </div>
+
+        <div class={opt.row}>
+          Calendar color dots on entries
+          <div class={opt.seg}>
+            <button
+              class={`${opt.segBtn}${o.showDots !== false ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showDots: undefined })}
+            >
+              Show
+            </button>
+            <button
+              class={`${opt.segBtn}${o.showDots === false ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showDots: false })}
+            >
+              Hide
+            </button>
+          </div>
+        </div>
+
         <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>

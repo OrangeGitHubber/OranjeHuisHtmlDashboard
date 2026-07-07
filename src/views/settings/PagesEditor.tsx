@@ -5,6 +5,7 @@ import {
   removePage,
   renamePage,
   setPageIcon,
+  setPageShowTitles,
   movePage,
 } from '../../lib/settings';
 import { currentRoute, navigate } from '../../lib/router';
@@ -47,6 +48,19 @@ export function PagesEditor() {
               onInput={(e) => renamePage(p.id, (e.target as HTMLInputElement).value)}
             />
             {p.kind === 'cameras' && <span class={styles.pageKind}>Cameras</span>}
+            <select
+              class={styles.pageTitleSel}
+              title="Card titles on this page"
+              value={p.showTitles === undefined ? 'system' : p.showTitles ? 'show' : 'hide'}
+              onChange={(e) => {
+                const v = (e.target as HTMLSelectElement).value;
+                setPageShowTitles(p.id, v === 'system' ? undefined : v === 'show');
+              }}
+            >
+              <option value="system">Titles: system</option>
+              <option value="show">Titles: show</option>
+              <option value="hide">Titles: hide</option>
+            </select>
             <span class={styles.widgetArrows}>
               <button onClick={() => movePage(p.id, -1)} disabled={i === 0} aria-label="Move up">
                 ▲

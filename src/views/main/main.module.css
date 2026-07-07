@@ -114,7 +114,7 @@
 
 .day {
   background: var(--surface-card, var(--surface));
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card, var(--border));
   border-radius: var(--radius);
   min-height: 150px;
   scroll-snap-align: start;

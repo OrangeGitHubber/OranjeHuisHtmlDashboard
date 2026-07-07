@@ -5,6 +5,7 @@ import { callSvc } from '../lib/ha/service';
 import { hasExtraControls } from './lightCaps';
 import { EntityDetailsModal } from './EntityDetailsModal';
 import { MdiIcon } from '../components/MdiIcon';
+import { domainIconNames } from '../lib/entityIcons';
 import type { ElementProps } from '../grid/elements';
 import styles from './elements.module.css';
 
@@ -75,8 +76,17 @@ function defaultIconNames(domain: string, entity: HassEntity): string[] {
       return ['mdi:speaker'];
     case 'climate':
       return ['mdi:thermostat'];
-    case 'cover':
+    case 'cover': {
+      const open = entity.state === 'open' || entity.state === 'opening';
+      if (dc === 'garage' || dc === 'garage_door') {
+        return open
+          ? ['mdi:garage-open-variant', 'mdi:garage-open']
+          : ['mdi:garage-variant', 'mdi:garage'];
+      }
+      if (dc === 'door') return open ? ['mdi:door-open'] : ['mdi:door-closed'];
+      if (dc === 'gate') return open ? ['mdi:gate-open'] : ['mdi:gate'];
       return ['mdi:window-shutter'];
+    }
     case 'fan':
       return ['mdi:fan'];
     case 'sensor':
@@ -99,10 +109,31 @@ function defaultIconNames(domain: string, entity: HassEntity): string[] {
   }
 }
 
+/** HA "shown as" (device_class) → human on/off wording. */
+const BINARY_DC_TEXT: Record<string, [string, string]> = {
+  door: ['Open', 'Closed'],
+  window: ['Open', 'Closed'],
+  garage_door: ['Open', 'Closed'],
+  opening: ['Open', 'Closed'],
+  lock: ['Unlocked', 'Locked'],
+  motion: ['Motion', 'Clear'],
+  occupancy: ['Occupied', 'Clear'],
+  presence: ['Home', 'Away'],
+  moisture: ['Wet', 'Dry'],
+  plug: ['Plugged in', 'Unplugged'],
+  connectivity: ['Connected', 'Disconnected'],
+};
+
 function stateText(entity: HassEntity): string {
   const { state } = entity;
   if (state === 'unavailable') return 'Unavailable';
   if (state === 'unknown') return '—';
+  const domain = entity.entity_id.split('.')[0];
+  if (domain === 'binary_sensor' && (state === 'on' || state === 'off')) {
+    const dc = entity.attributes.device_class;
+    const map = typeof dc === 'string' ? BINARY_DC_TEXT[dc] : undefined;
+    if (map) return state === 'on' ? map[0] : map[1];
+  }
   const unit = entity.attributes.unit_of_measurement;
   if (typeof unit === 'string' && unit) return `${state} ${unit}`;
   if (state === 'on') return 'On';
@@ -134,16 +165,26 @@ export default function EntityCard({ element }: ElementProps) {
 
   // state-aware icon + color: the icon (not the card shade) signals state.
   // Icon source order: HA's configured icon (attributes.icon), then a
-  // per-domain default matching HA's own, then the built-in fallback path.
+  // per-domain state-aware default, then a guaranteed domain fallback so
+  // every entity (e.g. unraid sensors) shows an icon.
   const haIcon = typeof entity.attributes.icon === 'string' ? [entity.attributes.icon] : [];
-  const iconNames = [...haIcon, ...defaultIconNames(domain, entity)];
+  const iconNames = [
+    ...haIcon,
+    ...defaultIconNames(domain, entity),
+    ...domainIconNames(entityId),
+  ];
   let fallbackPath: string | undefined = GLYPHS[domain];
   let glyphCls = styles.glyph;
   let glyphStyle: Record<string, string> | undefined;
+  const coverOpen =
+    domain === 'cover' && (entity.state === 'open' || entity.state === 'opening');
   if (domain === 'lock') {
     fallbackPath = locked ? LOCK_CLOSED : LOCK_OPEN;
     glyphCls = `${styles.glyph} ${locked ? styles.glyphLocked : styles.glyphUnlocked}`;
-  } else if ((TOGGLE_DOMAINS.has(domain) || domain === 'binary_sensor') && isOn && !unavailable) {
+  } else if (
+    !unavailable &&
+    (((TOGGLE_DOMAINS.has(domain) || domain === 'binary_sensor') && isOn) || coverOpen)
+  ) {
     glyphCls = `${styles.glyph} ${styles.glyphOn}`;
     if (domain === 'light') {
       // tint the bulb with the light's actual color (HA derives rgb_color
@@ -154,7 +195,6 @@ export default function EntityCard({ element }: ElementProps) {
       }
     }
   }
-  const hasIcon = iconNames.length > 0 || fallbackPath !== undefined;
 
   const hasDetails =
     domain === 'climate' ||
@@ -167,6 +207,8 @@ export default function EntityCard({ element }: ElementProps) {
       onTap = () => callSvc('homeassistant', 'toggle', undefined, { entity_id: entityId });
     } else if (domain === 'lock') {
       onTap = () => callSvc('lock', locked ? 'unlock' : 'lock', undefined, { entity_id: entityId });
+    } else if (domain === 'cover') {
+      onTap = () => callSvc('cover', 'toggle', undefined, { entity_id: entityId });
     } else if (ACTIVATE[domain]) {
       const [d, s] = ACTIVATE[domain];
       onTap = () => {
@@ -208,6 +250,18 @@ export default function EntityCard({ element }: ElementProps) {
     if (typeof b === 'number') mainText = `On · ${Math.round((b / 255) * 100)}%`;
   }
 
+  // fixed decimals for numeric (temperature etc.) sensors, when configured
+  const dec = element.options?.decimals;
+  if (typeof dec === 'number' && domain !== 'climate') {
+    const n = Number(entity.state);
+    if (Number.isFinite(n)) {
+      const unit = entity.attributes.unit_of_measurement;
+      mainText = `${n.toFixed(Math.min(Math.max(Math.round(dec), 0), 3))}${
+        typeof unit === 'string' && unit ? ` ${unit}` : ''
+      }`;
+    }
+  }
+
   return (
     <>
     <div
@@ -220,17 +274,12 @@ export default function EntityCard({ element }: ElementProps) {
       <div class={styles.cardBottom}>
         {subText && <span class={styles.sub}>{subText}</span>}
         <div class={styles.cardTop}>
-          {hasIcon && (
-            <MdiIcon
-              names={iconNames}
-              fallbackPath={fallbackPath}
-              class={glyphCls}
-              style={glyphStyle}
-            />
-          )}
-          {domain === 'binary_sensor' && !hasIcon && (
-            <span class={`${styles.dot}${isOn ? ` ${styles.dotOn}` : ''}`} />
-          )}
+          <MdiIcon
+            names={iconNames}
+            fallbackPath={fallbackPath}
+            class={glyphCls}
+            style={glyphStyle}
+          />
           <span class={styles.state}>{mainText}</span>
           {hasDetails && domain !== 'climate' && domain !== 'media_player' && (
             <button

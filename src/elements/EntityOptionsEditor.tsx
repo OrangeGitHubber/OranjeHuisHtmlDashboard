@@ -28,6 +28,28 @@ export default function EntityOptionsEditor({ pageId, element, onClose }: Editor
             onPick={(entityId) => updateElementOptions(pageId, element.id, { entityId })}
           />
         </div>
+        <div class={opt.row}>
+          Decimals (numeric sensors, e.g. temperature)
+          <div class={opt.seg}>
+            {([null, 0, 1, 2] as const).map((d) => (
+              <button
+                key={String(d)}
+                class={`${opt.segBtn}${
+                  (typeof element.options?.decimals === 'number'
+                    ? element.options.decimals
+                    : null) === d
+                    ? ` ${opt.segActive}`
+                    : ''
+                }`}
+                onClick={() =>
+                  updateElementOptions(pageId, element.id, { decimals: d ?? undefined })
+                }
+              >
+                {d === null ? 'Auto' : d}
+              </button>
+            ))}
+          </div>
+        </div>
         <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>

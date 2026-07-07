@@ -104,7 +104,7 @@ export default function SettingsView() {
           Card opacity · {s.cardOpacity}%
           <input
             type="range"
-            min={30}
+            min={0}
             max={100}
             value={s.cardOpacity}
             onInput={(e) =>

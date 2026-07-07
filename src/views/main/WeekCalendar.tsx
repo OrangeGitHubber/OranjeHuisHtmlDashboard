@@ -25,6 +25,10 @@ export interface CalendarOptions {
   vertical?: boolean;
   count?: number;
   calendars?: string[] | null;
+  /** show the "updated Xm ago" hint (default true) */
+  showUpdated?: boolean;
+  /** show the per-calendar color dot on entries (default true) */
+  showDots?: boolean;
 }
 
 export function calendarOptionsOf(element: ElementProps['element']): Required<CalendarOptions> {
@@ -43,6 +47,8 @@ export function calendarOptionsOf(element: ElementProps['element']): Required<Ca
     vertical: o.vertical === true,
     count: typeof o.count === 'number' ? Math.min(Math.max(Math.round(o.count), 1), 20) : 5,
     calendars: o.calendars !== undefined ? o.calendars : settings.value.calendars.selected,
+    showUpdated: o.showUpdated !== false,
+    showDots: o.showDots !== false,
   };
 }
 
@@ -137,7 +143,7 @@ export function WeekCalendar({ element }: ElementProps) {
         </h2>
         <div class={styles.weekTools}>
           {error && lastFetched !== null && <span class={styles.offline}>offline</span>}
-          {lastFetched !== null && (
+          {opt.showUpdated && lastFetched !== null && (
             <span class={styles.updated}>updated {agoLabel(lastFetched)}</span>
           )}
         </div>
@@ -151,13 +157,14 @@ export function WeekCalendar({ element }: ElementProps) {
           <button onClick={refresh}>Retry</button>
         </div>
       ) : opt.mode === 'agenda' ? (
-        <AgendaList events={events} count={opt.count} loading={loading} />
+        <AgendaList events={events} count={opt.count} loading={loading} dots={opt.showDots} />
       ) : (
         <WeekBoard
           events={events}
           days={opt.days}
           vertical={opt.vertical}
           loading={loading}
+          dots={opt.showDots}
         />
       )}
     </section>
@@ -169,11 +176,13 @@ function WeekBoard({
   days,
   vertical,
   loading,
+  dots,
 }: {
   events: CalendarEvent[];
   days: number;
   vertical: boolean;
   loading: boolean;
+  dots: boolean;
 }) {
   const board = buildDays(events, days);
   return (
@@ -200,10 +209,12 @@ function WeekBoard({
               ) : (
                 day.events.map((ev, i) => (
                   <div class={styles.event} key={i} title={ev.calendarName}>
-                    <span
-                      class={styles.eventDot}
-                      style={{ background: calendarColor(ev.calendarId) }}
-                    />
+                    {dots && (
+                      <span
+                        class={styles.eventDot}
+                        style={{ background: calendarColor(ev.calendarId) }}
+                      />
+                    )}
                     <div class={styles.eventText}>
                       <span class={styles.eventTime}>{timeLabel(ev, day)}</span>
                       <span class={styles.eventSummary}>{ev.summary}</span>
@@ -223,10 +234,12 @@ function AgendaList({
   events,
   count,
   loading,
+  dots,
 }: {
   events: CalendarEvent[];
   count: number;
   loading: boolean;
+  dots: boolean;
 }) {
   const now = new Date();
   const upcoming = events.filter((ev) => ev.end > now).slice(0, count);
@@ -244,7 +257,9 @@ function AgendaList({
       )}
       {upcoming.map((ev, i) => (
         <div class={styles.event} key={i} title={ev.calendarName}>
-          <span class={styles.eventDot} style={{ background: calendarColor(ev.calendarId) }} />
+          {dots && (
+            <span class={styles.eventDot} style={{ background: calendarColor(ev.calendarId) }} />
+          )}
           <div class={styles.eventText}>
             <span class={styles.eventTime}>{agendaDateLabel(ev)}</span>
             <span class={styles.eventSummary}>{ev.summary}</span>

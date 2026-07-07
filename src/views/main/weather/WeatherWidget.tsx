@@ -29,6 +29,11 @@ export default function WeatherWidget({ element }: ElementProps) {
   const own = element.options?.entityId;
   const entityId =
     typeof own === 'string' && own ? own : settings.value.weather.entityId;
+  const rawDays = element.options?.forecastDays;
+  const forecastDays =
+    typeof rawDays === 'number' && Number.isFinite(rawDays)
+      ? Math.min(Math.max(Math.round(rawDays), 1), 7)
+      : 5;
   const entitySig = useEntity(entityId ?? '__none__');
   const entity = entityId ? entitySig.value : undefined;
 
@@ -116,7 +121,7 @@ export default function WeatherWidget({ element }: ElementProps) {
 
       {daily.length > 0 && (
         <div class={styles.dailyRow}>
-          {daily.slice(0, 7).map((d, i) => (
+          {daily.slice(0, forecastDays).map((d, i) => (
             <div key={d.datetime} class={styles.dailyItem}>
               <span class={styles.dailyDay}>{dayLabel(d, i)}</span>
               {conditionIcon(d.condition, 26)}

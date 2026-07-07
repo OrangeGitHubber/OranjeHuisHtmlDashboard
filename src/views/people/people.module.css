@@ -16,10 +16,10 @@
   align-items: center;
   gap: 14px;
   background: var(--surface-card, var(--surface));
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-card, var(--border));
   border-radius: var(--radius);
   padding: 14px 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card, var(--shadow-sm));
   cursor: pointer;
   transition:
     border-color 0.15s ease,

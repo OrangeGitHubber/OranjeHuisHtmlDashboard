@@ -195,6 +195,16 @@
   outline-offset: -1px;
 }
 
+.pageTitleSel {
+  flex: 0 0 auto;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
 .pageKind {
   flex: 0 0 auto;
   font-size: 0.68rem;

@@ -18,6 +18,8 @@ export interface PageDef {
   /** icon NAME from src/lib/icons.ts */
   icon: string;
   kind: 'grid' | 'cameras';
+  /** per-page card-title default (element option > this > system setting) */
+  showTitles?: boolean;
   /** ignored for kind 'cameras' */
   elements: GridElement[];
   /** optional frosted background image URL ('/' paths resolve against the HA URL) */
@@ -178,6 +180,7 @@ function normalizePages(raw: unknown): PageDef[] {
         ...(typeof pg.backgroundGlass === 'number' && Number.isFinite(pg.backgroundGlass)
           ? { backgroundGlass: Math.min(Math.max(Math.round(pg.backgroundGlass), 0), 100) }
           : {}),
+        ...(typeof pg.showTitles === 'boolean' ? { showTitles: pg.showTitles } : {}),
       });
     }
   }
@@ -229,7 +232,7 @@ function normalize(raw: unknown): AppSettings {
     colorMode: r.colorMode === 'light' || r.colorMode === 'dark' ? r.colorMode : 'auto',
     cardOpacity:
       typeof r.cardOpacity === 'number' && Number.isFinite(r.cardOpacity)
-        ? Math.min(Math.max(Math.round(r.cardOpacity), 30), 100)
+        ? Math.min(Math.max(Math.round(r.cardOpacity), 0), 100)
         : base.cardOpacity,
     showTitles: r.showTitles !== false,
     titleColor: typeof r.titleColor === 'string' ? r.titleColor : '',
@@ -358,6 +361,11 @@ export function setPageBackground(pageId: string, url: string | undefined): void
 
 export function setPageBackgroundGlass(pageId: string, glass: number): void {
   patchPage(pageId, { backgroundGlass: Math.min(Math.max(Math.round(glass), 0), 100) });
+}
+
+/** undefined = follow the system-wide "show card titles" setting */
+export function setPageShowTitles(pageId: string, show: boolean | undefined): void {
+  patchPage(pageId, { showTitles: show });
 }
 
 export function movePage(pageId: string, dir: -1 | 1): void {

@@ -14,6 +14,8 @@ import {
 import { settings, addElement, newId } from '../lib/settings';
 import { elementDefs } from './elements';
 import { findFreeSlot } from './layout';
+import { MdiIcon } from '../components/MdiIcon';
+import { domainIconNames } from '../lib/entityIcons';
 import styles from './grid.module.css';
 
 function entryName(en: EntityEntry): string {
@@ -94,6 +96,7 @@ export function AddElementModal({
         checked={checked.has(en.entity_id)}
         onChange={() => toggleChecked(en.entity_id)}
       />
+      <MdiIcon names={domainIconNames(en.entity_id, en.icon)} class={styles.rowIcon} />
       <span class={styles.entityName}>{entryName(en)}</span>
       <span class={styles.entityId}>{en.entity_id}</span>
     </label>

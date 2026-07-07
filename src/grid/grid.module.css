@@ -100,9 +100,10 @@
   min-width: 0;
   container-type: inline-size; /* lets cards scale type with cqw units */
   /* recompute here so a per-element --card-alpha (set inline on .item)
-     overrides the :root-level computation */
+     overrides the :root-level computation; the border fades with the card */
   --surface-card: color-mix(in srgb, var(--surface) var(--card-alpha, 100%), transparent);
   --surface-2-card: color-mix(in srgb, var(--surface-2) var(--card-alpha, 100%), transparent);
+  --border-card: color-mix(in srgb, var(--border) var(--card-alpha, 100%), transparent);
 }
 
 .itemContent > * {
@@ -305,6 +306,7 @@
   container-type: inline-size;
   --surface-card: color-mix(in srgb, var(--surface) var(--card-alpha, 100%), transparent);
   --surface-2-card: color-mix(in srgb, var(--surface-2) var(--card-alpha, 100%), transparent);
+  --border-card: color-mix(in srgb, var(--border) var(--card-alpha, 100%), transparent);
 }
 
 .stackItem > * {
@@ -515,6 +517,13 @@
 
 .pickRow:hover {
   background: var(--surface-2);
+}
+
+.rowIcon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--text-dim);
 }
 
 .entitySub .pickRow {

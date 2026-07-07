@@ -28,6 +28,7 @@
      written to <html> at runtime); nav, modals and settings stay opaque */
   --surface-card: color-mix(in srgb, var(--surface) var(--card-alpha, 100%), transparent);
   --surface-2-card: color-mix(in srgb, var(--surface-2) var(--card-alpha, 100%), transparent);
+  --border-card: color-mix(in srgb, var(--border) var(--card-alpha, 100%), transparent);
 }
 
 /*

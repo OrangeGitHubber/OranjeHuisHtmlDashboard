@@ -84,13 +84,20 @@ export default function GridPage({ pageId }: { pageId: string }) {
             minHeight: `min(${el.h * (ROW + GAP) - GAP}px, 60vh)`,
           };
           const elAlpha = el.options?.opacity;
+          const effAlpha =
+            typeof elAlpha === 'number' && Number.isFinite(elAlpha)
+              ? Math.min(Math.max(elAlpha, 0), 100)
+              : settings.value.cardOpacity;
           if (typeof elAlpha === 'number' && Number.isFinite(elAlpha)) {
-            stackStyle['--card-alpha'] = `${Math.min(Math.max(elAlpha, 30), 100)}%`;
+            stackStyle['--card-alpha'] = `${effAlpha}%`;
           }
+          if (effAlpha === 0) stackStyle['--shadow-card'] = 'none';
           const stackTitle =
             typeof el.options?.showTitle === 'boolean'
               ? el.options.showTitle
-              : settings.value.showTitles;
+              : typeof page.showTitles === 'boolean'
+                ? page.showTitles
+                : settings.value.showTitles;
           const stackTitleColor = el.options?.titleColor;
           if (typeof stackTitleColor === 'string' && stackTitleColor) {
             stackStyle['--title-color'] = stackTitleColor;
@@ -226,13 +233,21 @@ export default function GridPage({ pageId }: { pageId: string }) {
           let style: Record<string, string> = pxRect(el);
           // per-element card opacity overrides the global setting
           const elAlpha = el.options?.opacity;
+          const effAlpha =
+            typeof elAlpha === 'number' && Number.isFinite(elAlpha)
+              ? Math.min(Math.max(elAlpha, 0), 100)
+              : settings.value.cardOpacity;
           if (typeof elAlpha === 'number' && Number.isFinite(elAlpha)) {
-            style = { ...style, '--card-alpha': `${Math.min(Math.max(elAlpha, 30), 100)}%` };
+            style = { ...style, '--card-alpha': `${effAlpha}%` };
           }
+          // fully transparent cards drop their shadow (border fades via CSS)
+          if (effAlpha === 0) style = { ...style, '--shadow-card': 'none' };
           const showTitle =
             typeof el.options?.showTitle === 'boolean'
               ? el.options.showTitle
-              : settings.value.showTitles;
+              : typeof page.showTitles === 'boolean'
+                ? page.showTitles
+                : settings.value.showTitles;
           const titleColor = el.options?.titleColor;
           if (typeof titleColor === 'string' && titleColor) {
             style = { ...style, '--title-color': titleColor };
