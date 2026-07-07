@@ -52,6 +52,12 @@
   border-color: var(--accent);
 }
 
+.addBtnOn {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .doneBtn {
   padding: 8px 20px;
   border: none;

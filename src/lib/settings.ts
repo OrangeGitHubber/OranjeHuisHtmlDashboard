@@ -28,6 +28,8 @@ export interface PageDef {
   kind: 'grid';
   /** per-page card-title default (element option > this > system setting) */
   showTitles?: boolean;
+  /** scale rows to fill the viewport height (fit to any screen, no scroll) */
+  fitHeight?: boolean;
   /** ignored for kind 'cameras' */
   elements: GridElement[];
   /** optional frosted background image URL ('/' paths resolve against the HA URL) */
@@ -201,6 +203,7 @@ function normalizePages(raw: unknown): PageDef[] {
           ? { backgroundGlass: Math.min(Math.max(Math.round(pg.backgroundGlass), 0), 100) }
           : {}),
         ...(typeof pg.showTitles === 'boolean' ? { showTitles: pg.showTitles } : {}),
+        ...(typeof pg.fitHeight === 'boolean' ? { fitHeight: pg.fitHeight } : {}),
       });
     }
   }
@@ -486,6 +489,10 @@ export function setPageBackgroundGlass(pageId: string, glass: number): void {
 /** undefined = follow the system-wide "show card titles" setting */
 export function setPageShowTitles(pageId: string, show: boolean | undefined): void {
   patchPage(pageId, { showTitles: show });
+}
+
+export function setPageFitHeight(pageId: string, fit: boolean): void {
+  patchPage(pageId, { fitHeight: fit });
 }
 
 export function movePage(pageId: string, dir: -1 | 1): void {

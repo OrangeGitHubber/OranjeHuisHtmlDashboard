@@ -6,6 +6,7 @@ import {
   renamePage,
   setPageBackground,
   setPageBackgroundGlass,
+  setPageFitHeight,
 } from '../lib/settings';
 import { elementDefs } from './elements';
 import { AsyncView } from '../components/AsyncView';
@@ -56,16 +57,27 @@ export default function GridPage({ pageId }: { pageId: string }) {
   const [drag, setDrag] = useState<DragState | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
+  const [availH, setAvailH] = useState(0);
 
   useEffect(() => {
     if (narrow) return;
     const el = wrapRef.current;
     if (!el) return;
-    setWidth(el.getBoundingClientRect().width);
-    const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setWidth(r.width);
+      // space from the grid's top to the bottom of the viewport (for fit mode)
+      setAvailH(Math.max(window.innerHeight - r.top - 16, 120));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [narrow]);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [narrow, editing]);
 
   if (!page) return null;
   const elements = page.elements;
@@ -162,11 +174,17 @@ export default function GridPage({ pageId }: { pageId: string }) {
     3,
   );
 
+  // "Fit to screen height": when viewing (not editing) a page with fitHeight,
+  // scale the row height so the layout fills the viewport top-to-bottom on any
+  // display. Otherwise rows are a fixed height and the page scrolls if tall.
+  const fit = !!page.fitHeight && !editing;
+  const rowH = fit && availH > 0 ? Math.max((availH - GAP * (rows - 1)) / rows, 10) : ROW;
+
   const pxRect = (r: GridRect) => ({
     left: `${r.x * (cellW + GAP)}px`,
-    top: `${r.y * (ROW + GAP)}px`,
+    top: `${r.y * (rowH + GAP)}px`,
     width: `${r.w * cellW + (r.w - 1) * GAP}px`,
-    height: `${r.h * ROW + (r.h - 1) * GAP}px`,
+    height: `${r.h * rowH + (r.h - 1) * GAP}px`,
   });
 
   const finishDrag = () => {
@@ -201,6 +219,13 @@ export default function GridPage({ pageId }: { pageId: string }) {
           <button class={styles.addBtn} onClick={() => setBgOpen(true)}>
             Background…
           </button>
+          <button
+            class={`${styles.addBtn}${page.fitHeight ? ` ${styles.addBtnOn}` : ''}`}
+            onClick={() => setPageFitHeight(pageId, !page.fitHeight)}
+            title="Scale this page to fill the screen height on any display"
+          >
+            Fit height {page.fitHeight ? '✓' : ''}
+          </button>
           <input
             class={styles.toolbarTitle}
             type="text"
@@ -224,7 +249,7 @@ export default function GridPage({ pageId }: { pageId: string }) {
         ref={wrapRef}
         class={`${styles.container}${editing ? ` ${styles.containerEditing}` : ''}`}
         style={{
-          height: `${rows * (ROW + GAP) - GAP}px`,
+          height: `${rows * (rowH + GAP) - GAP}px`,
           '--cell-w': `${cellW + GAP}px`,
         }}
       >
@@ -265,13 +290,13 @@ export default function GridPage({ pageId }: { pageId: string }) {
               style = {
                 ...style,
                 left: `${el.x * (cellW + GAP) + drag.dx}px`,
-                top: `${el.y * (ROW + GAP) + drag.dy}px`,
+                top: `${el.y * (rowH + GAP) + drag.dy}px`,
               };
             } else {
               style = {
                 ...style,
                 width: `${Math.max(el.w * cellW + (el.w - 1) * GAP + drag.dx, cellW)}px`,
-                height: `${Math.max(el.h * ROW + (el.h - 1) * GAP + drag.dy, ROW)}px`,
+                height: `${Math.max(el.h * rowH + (el.h - 1) * GAP + drag.dy, rowH)}px`,
               };
             }
           }
