@@ -216,6 +216,49 @@ video {
   display: none;
 }
 
+/* ---------- refresh button (lower-left, kiosk-friendly) ---------- */
+
+.refresh-fab {
+  position: fixed;
+  left: 18px;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
+  z-index: 15;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.refresh-fab:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.refresh-fab:active {
+  transform: scale(0.94);
+}
+
+.refresh-fab svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* clear the left sidebar on wide screens */
+@media (min-width: 768px) {
+  .refresh-fab {
+    left: calc(92px + 18px);
+    bottom: 22px;
+  }
+}
+
 /* ---------- night dimming ---------- */
 
 /* an overlay (not a filter) so position:fixed elements keep working */
