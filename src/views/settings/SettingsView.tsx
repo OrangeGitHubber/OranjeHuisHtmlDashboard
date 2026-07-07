@@ -113,6 +113,23 @@ export default function SettingsView() {
             }
           />
         </label>
+        <label class={styles.field}>
+          Display scale · {s.uiScale}%
+          <input
+            type="range"
+            min={70}
+            max={200}
+            step={5}
+            value={s.uiScale}
+            onInput={(e) =>
+              updateSettings({ uiScale: Number((e.target as HTMLInputElement).value) })
+            }
+          />
+          <span class={styles.dim}>
+            Text size. Large screens scale up automatically; nudge this if a wall display still
+            looks too small or too big.
+          </span>
+        </label>
         <label class={styles.checkItem}>
           <input
             type="checkbox"

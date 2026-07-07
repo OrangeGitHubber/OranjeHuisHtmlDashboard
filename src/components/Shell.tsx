@@ -1,5 +1,4 @@
 import { settings } from '../lib/settings';
-import { currentProfileName } from '../lib/profiles';
 import { currentRoute } from '../lib/router';
 import { haBase } from '../lib/config';
 import { minuteTick } from '../lib/clock';
@@ -63,26 +62,6 @@ export function Shell() {
       <StatusBanner />
       <Nav />
       <main class="shell-main">{content}</main>
-      <div class="corner-bl">
-        {s.showRefresh && (
-          <button
-            class="refresh-fab"
-            onClick={() => location.reload()}
-            aria-label="Refresh"
-            title="Refresh"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-        )}
-        <span class="corner-profile" title="Current dashboard">
-          {currentProfileName()}
-        </span>
-      </div>
       {nightDim && (
         <div
           class="night-overlay"

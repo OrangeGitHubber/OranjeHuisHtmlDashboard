@@ -12,6 +12,14 @@ body,
   height: 100%;
 }
 
+/* Fluid base type: everything sized in rem scales with the viewport, so a
+   large wall screen (e.g. a 4K TV whose browser reports a huge viewport)
+   gets proportionally bigger text instead of laptop-sized text in giant
+   cards. Laptops/monitors ≤ ~1920px stay at the 16px design baseline. */
+html {
+  font-size: calc(clamp(16px, 0.8vw, 34px) * var(--ui-scale, 1));
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -253,73 +261,60 @@ video {
   display: none;
 }
 
-/* ---------- lower-left corner: refresh button + current dashboard ---------- */
+/* ---------- sidebar extras: current dashboard + refresh (wide only) ---------- */
 
-.corner-bl {
-  position: fixed;
-  left: 18px;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  pointer-events: none; /* let clicks pass except on the children */
+/* hidden on the mobile bottom bar; shown in the sidebar above Settings */
+.nav-extra {
+  display: none;
 }
 
-.corner-bl > * {
-  pointer-events: auto;
+.nav-screen {
+  max-width: 100%;
+  color: var(--text-dim);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.refresh-fab {
-  width: 44px;
-  height: 44px;
+.nav-refresh {
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border: 1px solid var(--border);
   border-radius: 50%;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   color: var(--text-dim);
   cursor: pointer;
-  box-shadow: var(--shadow);
 }
 
-.refresh-fab:hover {
+.nav-refresh:hover {
   color: var(--accent);
   border-color: var(--accent);
 }
 
-.refresh-fab:active {
+.nav-refresh:active {
   transform: scale(0.94);
 }
 
-.refresh-fab svg {
+.nav-refresh svg {
   width: 22px;
   height: 22px;
 }
 
-.corner-profile {
-  max-width: 40vw;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* clear the left sidebar on wide screens */
 @media (min-width: 768px) {
-  .corner-bl {
-    left: calc(var(--nav-width, 92px) + 18px);
-    bottom: 22px;
+  .nav-extra {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
 }
 

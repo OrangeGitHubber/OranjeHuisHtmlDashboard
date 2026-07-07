@@ -55,6 +55,8 @@ export interface AppSettings {
   titleColor: string;
   /** width of the left navigation sidebar in px (wide screens) */
   navWidth: number;
+  /** manual text/UI scale multiplier in percent (70–200); 100 = auto default */
+  uiScale: number;
   /** show the lower-left refresh button */
   showRefresh: boolean;
   /** poll for new deploys and show a "please refresh" banner */
@@ -129,6 +131,7 @@ function defaults(): AppSettings {
     showTitles: true,
     titleColor: '',
     navWidth: 92,
+    uiScale: 100,
     showRefresh: true,
     checkUpdates: true,
     nightDim: false,
@@ -301,6 +304,10 @@ function normalize(raw: unknown): AppSettings {
       typeof r.navWidth === 'number' && Number.isFinite(r.navWidth)
         ? Math.min(Math.max(Math.round(r.navWidth), 60), 320)
         : base.navWidth,
+    uiScale:
+      typeof r.uiScale === 'number' && Number.isFinite(r.uiScale)
+        ? Math.min(Math.max(Math.round(r.uiScale), 70), 200)
+        : base.uiScale,
     showRefresh: r.showRefresh !== false,
     checkUpdates: r.checkUpdates !== false,
     nightDim: r.nightDim === true,
@@ -594,6 +601,7 @@ settings.subscribe((s) => {
   applyColorMode(s.colorMode);
   document.documentElement.style.setProperty('--card-alpha', `${s.cardOpacity}%`);
   document.documentElement.style.setProperty('--nav-width', `${s.navWidth}px`);
+  document.documentElement.style.setProperty('--ui-scale', String(s.uiScale / 100));
   if (s.titleColor) document.documentElement.style.setProperty('--title-color', s.titleColor);
   else document.documentElement.style.removeProperty('--title-color');
 });
