@@ -20,8 +20,8 @@
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.22);
 
-  /* page-builder grid cell */
-  --grid-row: 56px;
+  /* page-builder grid cell (24-col grid, half-height rows for finer control) */
+  --grid-row: 28px;
   --grid-gap: 12px;
 
   /* card surfaces honor the global card-opacity setting (--card-alpha is

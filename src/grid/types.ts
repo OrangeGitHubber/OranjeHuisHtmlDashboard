@@ -15,4 +15,4 @@ export interface GridElement extends GridRect {
   options?: Record<string, unknown>;
 }
 
-export const GRID_COLS = 12;
+export const GRID_COLS = 24;

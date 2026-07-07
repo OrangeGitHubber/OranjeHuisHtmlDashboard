@@ -203,9 +203,16 @@
   inset: 0;
   display: grid;
   place-items: center;
+  gap: 12px;
   color: var(--text-dim);
   padding: 24px;
   text-align: center;
+}
+
+.connectingNote {
+  font-size: 0.82rem;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 /* stream failed → auto-refreshing snapshot with a caption */

@@ -75,16 +75,13 @@ export function PersonCard({
       ? geocoded.state
       : null;
 
-  // the person's active tracker gives the device name; battery comes from
-  // the companion app's battery sensor (best-effort, hidden if not found)
+  // battery comes from the companion app's battery sensor for the person's
+  // active tracker (best-effort, hidden if not found)
   const source = typeof entity.attributes.source === 'string' ? entity.attributes.source : '';
   const base = source.includes('.') ? source.split('.')[1] : '';
   const sourceEntity = useEntity(source || '__none__').value;
   const battA = useEntity(base ? `sensor.${base}_battery_level` : '__none__').value;
   const battB = useEntity(base ? `sensor.${base}_battery` : '__none__').value;
-  const deviceName =
-    (sourceEntity?.attributes.friendly_name as string | undefined) ??
-    (base ? base.replace(/_/g, ' ') : '');
   const battery =
     num(sourceEntity?.attributes.battery_level) ??
     (battA ? num(battA.state) : null) ??
@@ -104,7 +101,8 @@ export function PersonCard({
   const isAway = state === 'not_home';
   const label = isHome ? 'Home' : isAway ? 'Away' : state;
   const chipClass = isHome ? styles.chipHome : isAway ? styles.chipAway : styles.chipZone;
-  const secondary = isAway && showAddress && address ? address : deviceName;
+  // only show a street address (when away + enabled); no app/integration name
+  const secondary = isAway && showAddress && address ? address : null;
 
   return (
     <>

@@ -11,11 +11,15 @@
   gap: 10px;
 }
 
-/* compact person card: avatar + info on top, battery bar at the bottom */
+/* compact person card: avatar + info on top, battery bar at the bottom.
+   Fills its grid cell so presence widgets scale cards to available space. */
 .card {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 10px;
+  height: 100%;
+  min-height: 0;
   background: var(--surface-card, var(--surface));
   border: 1px solid var(--border-card, var(--border));
   border-radius: var(--radius);

@@ -20,7 +20,7 @@ import opt from '../components/options.module.css';
 import styles from './grid.module.css';
 
 // must match --grid-row / --grid-gap in theme.css
-const ROW = 56;
+const ROW = 28;
 const GAP = 12;
 
 const PENCIL =

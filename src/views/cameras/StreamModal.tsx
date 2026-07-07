@@ -301,9 +301,15 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
         </header>
         <div class={styles.videoWrap}>
           <video ref={videoRef} playsInline muted autoPlay controls={false} />
+          {/* show the live snapshot immediately while the stream connects, so
+              the camera image appears in ~1s instead of black + spinner */}
+          {starting && !error && snapshotSrc && (
+            <img class={styles.fallbackSnap} src={snapshotSrc} alt={name} />
+          )}
           {starting && !error && (
             <div class={styles.videoOverlay}>
               <Spinner />
+              <span class={styles.connectingNote}>Connecting live view…</span>
             </div>
           )}
           {error && snapshotSrc && (

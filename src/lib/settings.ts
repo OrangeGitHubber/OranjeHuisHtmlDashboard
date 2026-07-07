@@ -29,7 +29,7 @@ export interface PageDef {
 }
 
 export interface AppSettings {
-  version: 2;
+  version: 3;
   title: string;
   subtitle: string;
   pages: PageDef[];
@@ -57,8 +57,10 @@ export interface AppSettings {
   calendars: { selected: string[] | null };
 }
 
-const KEY = 'oranjehuis.settings.v2';
-// kept (not deleted) so a rollback to the previous image still finds its config
+// v3 doubled the grid resolution (12→24 cols, 56→28px rows); older keys are
+// kept so a rollback to a previous image still finds its config.
+const KEY = 'oranjehuis.settings.v3';
+const V2_KEY = 'oranjehuis.settings.v2';
 const V1_KEY = 'oranjehuis.settings.v1';
 const LEGACY_CALENDARS_KEY = 'oranjehuis.selectedCalendars.v1';
 
@@ -66,13 +68,23 @@ export function newId(prefix: string): string {
   return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
-/** Sizes used when migrating v1 widgets and as add-defaults for widgets. */
+/** v1-widget sizes in the OLD 12-col grid; the v2→v3 pass doubles them. */
 const WIDGET_SIZES: Record<string, { w: number; h: number }> = {
   calendar: { w: 12, h: 4 },
   weather: { w: 6, h: 3 },
   presence: { w: 6, h: 3 },
 };
 
+/** Default Main elements in OLD 12-col units (doubled by migration). */
+function legacyMainElements(): GridElement[] {
+  return [
+    { id: 'calendar', type: 'calendar', x: 0, y: 0, w: 12, h: 4 },
+    { id: 'weather', type: 'weather', x: 0, y: 4, w: 6, h: 3 },
+    { id: 'presence', type: 'presence', x: 6, y: 4, w: 6, h: 3 },
+  ];
+}
+
+/** Default Main page in the NEW 24-col grid (fresh installs). */
 function defaultMainPage(): PageDef {
   return {
     id: 'main',
@@ -80,9 +92,9 @@ function defaultMainPage(): PageDef {
     icon: 'home',
     kind: 'grid',
     elements: [
-      { id: 'calendar', type: 'calendar', x: 0, y: 0, w: 12, h: 4 },
-      { id: 'weather', type: 'weather', x: 0, y: 4, w: 6, h: 3 },
-      { id: 'presence', type: 'presence', x: 6, y: 4, w: 6, h: 3 },
+      { id: 'calendar', type: 'calendar', x: 0, y: 0, w: 24, h: 8 },
+      { id: 'weather', type: 'weather', x: 0, y: 8, w: 12, h: 6 },
+      { id: 'presence', type: 'presence', x: 12, y: 8, w: 12, h: 6 },
     ],
   };
 }
@@ -93,7 +105,7 @@ function defaultCamerasPage(): PageDef {
 
 function defaults(): AppSettings {
   return {
-    version: 2,
+    version: 3,
     title: 'My Home',
     subtitle: 'Smart Dashboard',
     pages: [defaultMainPage(), defaultCamerasPage()],
@@ -184,8 +196,26 @@ function normalizePages(raw: unknown): PageDef[] {
       });
     }
   }
-  if (out.length === 0) out.push(defaultMainPage(), defaultCamerasPage());
+  // note: empty-case default injection happens in normalize(), after the
+  // optional v2→v3 coordinate doubling, so 24-col defaults aren't doubled
   return out;
+}
+
+/** v2→v3: double every element's grid coordinates (12→24 cols, 56→28 rows). */
+function doubleElements(p: PageDef): PageDef {
+  return {
+    ...p,
+    elements: p.elements.map((e) => {
+      const w = Math.min(e.w * 2, GRID_COLS);
+      return {
+        ...e,
+        w,
+        h: e.h * 2,
+        x: Math.min(Math.max(e.x * 2, 0), GRID_COLS - w),
+        y: Math.max(e.y * 2, 0),
+      };
+    }),
+  };
 }
 
 /** Converts a v1 settings object (widgets list) into the v2 pages shape. */
@@ -209,9 +239,15 @@ function migrateV1(r: Record<string, unknown>): Record<string, unknown> {
         : {}),
     });
   }
-  const main: PageDef = { ...defaultMainPage(), elements };
-  if (elements.length === 0) main.elements = defaultMainPage().elements;
-  // drop the v1 'widgets' key so it doesn't linger in v2 exports via ...rest
+  // 12-col output; the v2→v3 pass in normalize() doubles it to 24-col
+  const main: PageDef = {
+    id: 'main',
+    title: 'Main',
+    icon: 'home',
+    kind: 'grid',
+    elements: elements.length > 0 ? elements : legacyMainElements(),
+  };
+  // drop the v1 'widgets' key so it doesn't linger in exports via ...rest
   const rest: Record<string, unknown> = { ...r };
   delete rest.widgets;
   return { ...rest, pages: [main, defaultCamerasPage()] };
@@ -221,13 +257,18 @@ function migrateV1(r: Record<string, unknown>): Record<string, unknown> {
 function normalize(raw: unknown): AppSettings {
   let r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   if (r.version === 1 || !Array.isArray(r.pages)) r = migrateV1(r);
+  const storedVersion = typeof r.version === 'number' ? r.version : 1;
   const base = defaults();
+  // grid coordinates are in 12-col units up to v2; double them for v3
+  let pages = normalizePages(r.pages);
+  if (storedVersion < 3) pages = pages.map(doubleElements);
+  if (pages.length === 0) pages = [defaultMainPage(), defaultCamerasPage()];
   return {
     ...r, // preserve unknown top-level keys from newer versions
-    version: 2,
+    version: 3,
     title: typeof r.title === 'string' && r.title.trim() ? r.title : base.title,
     subtitle: typeof r.subtitle === 'string' ? r.subtitle : base.subtitle,
-    pages: normalizePages(r.pages),
+    pages,
     theme: typeof r.theme === 'string' && r.theme ? r.theme : base.theme,
     colorMode: r.colorMode === 'light' || r.colorMode === 'dark' ? r.colorMode : 'auto',
     cardOpacity:
@@ -268,11 +309,12 @@ function normalize(raw: unknown): AppSettings {
 
 function load(): AppSettings {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return normalize(JSON.parse(raw));
-    const v1 = localStorage.getItem(V1_KEY);
-    if (v1) {
-      const migrated = normalize(JSON.parse(v1));
+    const v3 = localStorage.getItem(KEY);
+    if (v3) return normalize(JSON.parse(v3));
+    // migrate from an older key and persist so the doubling runs only once
+    const older = localStorage.getItem(V2_KEY) ?? localStorage.getItem(V1_KEY);
+    if (older) {
+      const migrated = normalize(JSON.parse(older));
       localStorage.setItem(KEY, JSON.stringify(migrated));
       return migrated;
     }
