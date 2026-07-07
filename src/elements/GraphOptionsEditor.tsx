@@ -1,8 +1,6 @@
-import { useState } from 'preact/hooks';
 import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement } from '../lib/settings';
-import { useEntitiesByDomain } from '../lib/ha/entities';
-import { friendlyName } from '../views/settings/EntitySelect';
+import { EntityPicker } from '../grid/EntityPicker';
 import { CardOpacityRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
 import type { GraphOptions } from './GraphCard';
@@ -16,26 +14,12 @@ const WINDOWS: { hours: number; label: string }[] = [
   { hours: 168, label: '7 d' },
 ];
 
-const MAX_RESULTS = 50;
-
 export default function GraphOptionsEditor({ pageId, element, onClose }: EditorProps) {
   const o = (element.options ?? {}) as GraphOptions;
-  const [query, setQuery] = useState('');
-  const sensors = useEntitiesByDomain('sensor').value;
   const set = (patch: Partial<GraphOptions>) => updateElementOptions(pageId, element.id, patch);
 
-  const q = query.trim().toLowerCase();
-  const matches = q
-    ? sensors
-        .filter(
-          (s) =>
-            friendlyName(s).toLowerCase().includes(q) || s.entity_id.toLowerCase().includes(q),
-        )
-        .slice(0, MAX_RESULTS)
-    : [];
-
   return (
-    <Modal onClose={onClose} maxWidth={460}>
+    <Modal onClose={onClose} maxWidth={520}>
       <header class={opt.header}>
         <span>History graph settings</span>
         <button class={opt.close} onClick={onClose} aria-label="Close">
@@ -46,34 +30,13 @@ export default function GraphOptionsEditor({ pageId, element, onClose }: EditorP
         <p class={opt.dim}>
           Showing <code>{o.entityId ?? 'no sensor yet'}</code>
         </p>
-        <label class={opt.row}>
+        <div class={opt.row}>
           Sensor
-          <input
-            type="search"
-            placeholder="Search sensors (e.g. glances, cpu, temperature)…"
-            value={query}
-            onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+          <EntityPicker
+            onPick={(entityId) => set({ entityId })}
+            filter={(en) => en.entity_id.startsWith('sensor.')}
           />
-        </label>
-        {q && matches.length === 0 && <p class={opt.dim}>No sensors match.</p>}
-        {matches.length > 0 && (
-          <ul class={opt.checklist}>
-            {matches.map((s) => (
-              <li key={s.entity_id}>
-                <label class={opt.checkItem}>
-                  <input
-                    type="radio"
-                    name="sensor"
-                    checked={s.entity_id === o.entityId}
-                    onChange={() => set({ entityId: s.entity_id })}
-                  />
-                  <span class={opt.checkName}>{friendlyName(s)}</span>
-                  <span class={opt.checkId}>{s.entity_id}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
+        </div>
         <div class={opt.row}>
           Window
           <div class={opt.seg}>
