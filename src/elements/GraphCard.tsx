@@ -3,6 +3,8 @@ import type { JSX } from 'preact';
 import { useEntity } from '../lib/ha/entities';
 import { useHistory, type HistoryPoint } from './useHistory';
 import { friendlyName } from './EntityCard';
+import { MdiIcon } from '../components/MdiIcon';
+import { domainIconNames } from '../lib/entityIcons';
 import type { ElementProps } from '../grid/elements';
 import styles from './elements.module.css';
 
@@ -11,6 +13,10 @@ export interface GraphOptions {
   /** window in hours (3–168) */
   hours?: number;
   title?: string;
+  /** 'graph' = full history chart; 'tile' = compact stat tile + sparkline */
+  layout?: 'graph' | 'tile';
+  /** mdi icon name for tile mode; falls back to the entity's icon */
+  icon?: string;
 }
 
 // viewBox units; stretched to the card (line width stays fixed via
@@ -88,6 +94,38 @@ export default function GraphCard({ element }: ElementProps) {
   };
 
   const shown = hover ? hover.v : current;
+
+  // ---- compact stat tile: icon + label + value + sparkline ----
+  if (o.layout === 'tile') {
+    const iconNames = [
+      ...(typeof o.icon === 'string' && o.icon ? [o.icon] : []),
+      ...(typeof entity?.attributes.icon === 'string' ? [entity.attributes.icon] : []),
+      ...domainIconNames(entityId),
+    ];
+    return (
+      <div class={`${styles.card} ${styles.tileCard}`}>
+        <MdiIcon names={iconNames} class={styles.tileIcon} />
+        <div class={styles.tileBody}>
+          <span class={styles.tileLabel}>{title}</span>
+          <span class={styles.tileValue}>
+            {current !== null ? fmtVal(current) : '—'}
+            {unit && <span class={styles.tileUnit}> {unit}</span>}
+          </span>
+          {points.length >= 2 && (
+            <svg
+              class={styles.tileSpark}
+              viewBox={`0 0 ${W} ${H}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path d={areaPath} class={styles.graphArea} />
+              <path d={linePath} class={styles.graphLine} />
+            </svg>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div class={`${styles.card} ${styles.graphCard}`}>

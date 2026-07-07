@@ -1,6 +1,7 @@
 import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement } from '../lib/settings';
 import { EntityPicker } from '../grid/EntityPicker';
+import { MdiIcon } from '../components/MdiIcon';
 import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
 import type { GraphOptions } from './GraphCard';
@@ -12,6 +13,24 @@ const WINDOWS: { hours: number; label: string }[] = [
   { hours: 24, label: '24 h' },
   { hours: 48, label: '2 d' },
   { hours: 168, label: '7 d' },
+];
+
+// common stat-tile icons (the mdi set HA uses)
+const TILE_ICONS = [
+  'mdi:chip',
+  'mdi:memory',
+  'mdi:wifi',
+  'mdi:harddisk',
+  'mdi:server-network',
+  'mdi:thermometer',
+  'mdi:speedometer',
+  'mdi:gauge',
+  'mdi:flash',
+  'mdi:lightning-bolt',
+  'mdi:download',
+  'mdi:upload',
+  'mdi:fan',
+  'mdi:water-percent',
 ];
 
 export default function GraphOptionsEditor({ pageId, element, onClose }: EditorProps) {
@@ -37,6 +56,46 @@ export default function GraphOptionsEditor({ pageId, element, onClose }: EditorP
             filter={(en) => en.entity_id.startsWith('sensor.')}
           />
         </div>
+        <div class={opt.row}>
+          Layout
+          <div class={opt.seg}>
+            <button
+              class={`${opt.segBtn}${o.layout !== 'tile' ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ layout: 'graph' })}
+            >
+              Full graph
+            </button>
+            <button
+              class={`${opt.segBtn}${o.layout === 'tile' ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ layout: 'tile' })}
+            >
+              Compact tile
+            </button>
+          </div>
+        </div>
+        {o.layout === 'tile' && (
+          <div class={opt.row}>
+            Tile icon
+            <div class={opt.iconRow}>
+              <button
+                class={`${opt.iconBtn}${!o.icon ? ` ${opt.iconBtnActive}` : ''}`}
+                onClick={() => set({ icon: undefined })}
+              >
+                Auto
+              </button>
+              {TILE_ICONS.map((name) => (
+                <button
+                  key={name}
+                  class={`${opt.iconBtn}${o.icon === name ? ` ${opt.iconBtnActive}` : ''}`}
+                  onClick={() => set({ icon: name })}
+                  aria-label={name}
+                >
+                  <MdiIcon names={[name]} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div class={opt.row}>
           Window
           <div class={opt.seg}>
