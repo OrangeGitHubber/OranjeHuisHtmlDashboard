@@ -2,6 +2,7 @@ import { settings, updateSettings, setTheme } from '../../lib/settings';
 import { themes } from '../../lib/themes';
 import { serverConfig, setupRequested } from '../../lib/config';
 import { PagesEditor } from './PagesEditor';
+import { ProfilesEditor } from './ProfilesEditor';
 import { ExportImport } from './ExportImport';
 import styles from './settings.module.css';
 
@@ -180,6 +181,11 @@ export default function SettingsView() {
             inactivity timeout.
           </p>
         )}
+      </section>
+
+      <section class={styles.section}>
+        <h2>Profiles</h2>
+        <ProfilesEditor />
       </section>
 
       <section class={styles.section}>

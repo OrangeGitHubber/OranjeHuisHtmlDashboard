@@ -2,11 +2,16 @@ import { render } from 'preact';
 import { App } from './app';
 import { fetchServerConfig } from './lib/config';
 import { getConnection } from './lib/ha/connection';
+import { initProfiles } from './lib/settings';
 import './styles/theme.css';
 import './styles/base.css';
 
-// ask the container whether it's configured, then connect through the proxy
+// ask the container whether it's configured, then load the shared profile and
+// connect to HA through the proxy
 fetchServerConfig().then((cfg) => {
+  initProfiles().catch(() => {
+    /* offline — the localStorage cache in the settings signal is used */
+  });
   if (cfg.configured) {
     getConnection().catch(() => {
       /* auth-failed is reflected in connectionStatus; App routes to setup */

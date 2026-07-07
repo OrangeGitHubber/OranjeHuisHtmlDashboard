@@ -1,4 +1,12 @@
-import { getConnection, setConnection, normalizeHassUrl } from './config-store.mjs';
+import {
+  getConnection,
+  setConnection,
+  normalizeHassUrl,
+  listProfiles,
+  readProfile,
+  writeProfile,
+  deleteProfile,
+} from './config-store.mjs';
 
 function json(res, status, obj) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -68,6 +76,48 @@ export async function handleConfig(req, res) {
         return;
       }
       await setConnection(hassUrl, token);
+      json(res, 200, { ok: true });
+      return;
+    }
+    res.writeHead(405).end('Method not allowed');
+    return;
+  }
+
+  if (url === '/config/profiles' && req.method === 'GET') {
+    json(res, 200, await listProfiles());
+    return;
+  }
+
+  if (url.startsWith('/config/profiles/')) {
+    const name = decodeURIComponent(url.slice('/config/profiles/'.length));
+    if (req.method === 'GET') {
+      const p = await readProfile(name);
+      if (!p) {
+        res.writeHead(404).end('Not found');
+        return;
+      }
+      json(res, 200, p);
+      return;
+    }
+    if (req.method === 'PUT') {
+      let body;
+      try {
+        body = await readJson(req);
+      } catch {
+        json(res, 400, { ok: false, error: 'Invalid JSON.' });
+        return;
+      }
+      try {
+        await writeProfile(name, body);
+      } catch {
+        json(res, 400, { ok: false, error: 'Invalid profile name.' });
+        return;
+      }
+      json(res, 200, { ok: true });
+      return;
+    }
+    if (req.method === 'DELETE') {
+      await deleteProfile(name);
       json(res, 200, { ok: true });
       return;
     }

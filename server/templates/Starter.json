@@ -1,0 +1,21 @@
+{
+  "version": 3,
+  "title": "My Home",
+  "subtitle": "Smart Dashboard",
+  "theme": "orange",
+  "colorMode": "auto",
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "icon": "home",
+      "kind": "grid",
+      "elements": [
+        { "id": "clock", "type": "clock", "x": 0, "y": 0, "w": 6, "h": 4 },
+        { "id": "weather", "type": "weather", "x": 6, "y": 0, "w": 12, "h": 6 },
+        { "id": "cal", "type": "calendar", "x": 0, "y": 6, "w": 24, "h": 8 },
+        { "id": "presence", "type": "presence", "x": 0, "y": 14, "w": 12, "h": 6 }
+      ]
+    }
+  ]
+}

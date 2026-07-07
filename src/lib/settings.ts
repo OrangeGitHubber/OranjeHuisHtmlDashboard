@@ -3,6 +3,14 @@ import { applyTheme, applyColorMode } from './themes';
 import type { GridElement, GridRect } from '../grid/types';
 import { GRID_COLS } from '../grid/types';
 import { findFreeSlot } from '../grid/layout';
+import {
+  listProfiles,
+  loadProfile,
+  saveProfile,
+  deleteProfile,
+  currentProfileName,
+  setCurrentProfileName,
+} from './profiles';
 
 /**
  * All dashboard configuration in one versioned, exportable object.
@@ -330,15 +338,82 @@ function load(): AppSettings {
   }
 }
 
+// initial value is the local cache; the selected server profile replaces it
+// on boot via initProfiles() (falls back to this cache when offline)
 export const settings = signal<AppSettings>(load());
+
+let suppressServerPush = false;
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+
+function scheduleProfileSave(): void {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveProfile(currentProfileName(), settings.peek());
+  }, 800);
+}
 
 function persist(next: AppSettings): void {
   settings.value = next;
   try {
-    localStorage.setItem(KEY, JSON.stringify(next));
+    localStorage.setItem(KEY, JSON.stringify(next)); // offline cache
   } catch {
     /* storage full/blocked — keep running with in-memory settings */
   }
+  if (!suppressServerPush) scheduleProfileSave();
+}
+
+/** Replace settings from a server profile without echoing it straight back. */
+function applyServerProfile(raw: unknown): void {
+  suppressServerPush = true;
+  persist(normalize(raw));
+  suppressServerPush = false;
+}
+
+/* ---------- profiles (shared, server-backed) ---------- */
+
+/** Boot: load the device's selected profile, seeding a Default if none exist. */
+export async function initProfiles(): Promise<void> {
+  const list = await listProfiles();
+  const userProfiles = list.filter((p) => !p.template);
+  if (userProfiles.length === 0) {
+    // nothing on the server yet — seed Default from this device's cache
+    setCurrentProfileName('Default');
+    await saveProfile('Default', settings.peek());
+    return;
+  }
+  let name = currentProfileName();
+  if (!userProfiles.some((p) => p.name === name)) name = userProfiles[0].name;
+  setCurrentProfileName(name);
+  const raw = await loadProfile(name);
+  if (raw) applyServerProfile(raw);
+}
+
+export async function switchProfile(name: string): Promise<void> {
+  setCurrentProfileName(name);
+  const raw = await loadProfile(name);
+  if (raw) applyServerProfile(raw);
+}
+
+/** Save the current layout as a new profile and make it active. */
+export async function saveCurrentAs(name: string): Promise<void> {
+  const safe = name.trim();
+  if (!safe) return;
+  setCurrentProfileName(safe);
+  await saveProfile(safe, settings.peek());
+}
+
+/** Clone a template into a new named profile and make it active. */
+export async function cloneProfile(sourceName: string, newName: string): Promise<void> {
+  const safe = newName.trim();
+  const raw = await loadProfile(sourceName);
+  if (!safe || !raw) return;
+  setCurrentProfileName(safe);
+  applyServerProfile(raw);
+  await saveProfile(safe, settings.peek());
+}
+
+export async function removeProfile(name: string): Promise<void> {
+  await deleteProfile(name);
 }
 
 export function updateSettings(patch: Partial<AppSettings>): void {

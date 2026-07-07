@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "title": "My Home",
+  "subtitle": "",
+  "theme": "orange",
+  "colorMode": "auto",
+  "pages": [{ "id": "home", "title": "Home", "icon": "home", "kind": "grid", "elements": [] }]
+}
