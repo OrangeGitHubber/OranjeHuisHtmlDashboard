@@ -183,11 +183,11 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
-  align-items: flex-start;
+  /* center the cards vertically within the bar */
+  align-items: center;
   /* more cards than fit → scroll horizontally */
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 4px;
 }
 
 .alertItem {

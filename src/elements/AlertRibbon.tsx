@@ -87,7 +87,7 @@ export function opLabel(it: AlertItem): string {
  * Shows entity cards ONLY while their "display if…" condition holds
  * (e.g. door open, temperature above a threshold). Quiet when all clear.
  */
-export default function AlertRibbon({ element }: ElementProps) {
+export default function AlertRibbon({ element, editing }: ElementProps) {
   const o = (element.options ?? {}) as AlertRibbonOptions;
   const items = Array.isArray(o.items) ? o.items : [];
   const title = o.title?.trim() || 'Alerts';
@@ -109,28 +109,38 @@ export default function AlertRibbon({ element }: ElementProps) {
     options: { entityId },
   });
 
+  // when nothing is triggered, the ribbon is silent in normal use; the
+  // title + placeholder only appear in page edit mode so it stays findable
+  if (active.length === 0) {
+    if (!editing) return <div class={`${styles.card} ${styles.alertRibbon}`} />;
+    return (
+      <div class={`${styles.card} ${styles.alertRibbon}`}>
+        <div class={styles.graphHead}>
+          <span class={`${styles.name} card-title`}>{title}</span>
+        </div>
+        <span class={styles.alertClear}>
+          {items.length === 0 ? 'No alert rules — tap to configure.' : 'All clear ✓'}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div class={`${styles.card} ${styles.alertRibbon}`}>
       <div class={styles.graphHead}>
         <span class={`${styles.name} card-title`}>{title}</span>
       </div>
-      {items.length === 0 ? (
-        <span class={styles.alertClear}>No alert rules — tap this card in page edit mode.</span>
-      ) : active.length === 0 ? (
-        <span class={styles.alertClear}>All clear ✓</span>
-      ) : (
-        <div class={styles.alertRow}>
-          {active.map((it) => (
-            <div
-              key={it.id}
-              class={styles.alertItem}
-              style={{ width: `${size.w}px`, height: `${size.h}px` }}
-            >
-              <EntityCard pageId="" element={syntheticFor(it.entityId)} editing={false} />
-            </div>
-          ))}
-        </div>
-      )}
+      <div class={styles.alertRow}>
+        {active.map((it) => (
+          <div
+            key={it.id}
+            class={styles.alertItem}
+            style={{ width: `${size.w}px`, height: `${size.h}px` }}
+          >
+            <EntityCard pageId="" element={syntheticFor(it.entityId)} editing={false} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
