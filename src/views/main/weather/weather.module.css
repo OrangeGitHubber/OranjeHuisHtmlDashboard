@@ -2,9 +2,9 @@
   background: var(--surface-card, var(--surface));
   border: 1px solid var(--border-card, var(--border));
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 1rem;
   display: grid;
-  gap: 14px;
+  gap: 0.875rem;
   align-content: start;
   height: 100%;
 }
