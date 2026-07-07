@@ -3,8 +3,22 @@ import type { HassEntity } from 'home-assistant-js-websocket';
 import { getSignedUrl } from '../../lib/ha/signedPath';
 import { haBase } from '../../lib/config';
 import { useEntity } from '../../lib/ha/entities';
+import { minuteTick } from '../../lib/clock';
 import { PersonMapModal } from './PersonMapModal';
 import styles from './people.module.css';
+
+/** "5m ago" / "3h ago" / "just now" from an ISO timestamp. */
+function agoLabel(iso: string | undefined, now: number): string {
+  if (!iso) return '';
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const m = Math.floor((now - then) / 60_000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
 const CAR_ICON =
   'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z';
@@ -56,15 +70,19 @@ export function PersonCard({
   activityEntityId,
   geocodedEntityId,
   showAddress,
+  showLastSeen,
 }: {
   entity: HassEntity;
   activityEntityId?: string;
   geocodedEntityId?: string;
   showAddress?: boolean;
+  /** show when the person's device last reported in */
+  showLastSeen?: boolean;
 }) {
   const name = (entity.attributes.friendly_name as string | undefined) ?? entity.entity_id;
   const avatar = usePersonAvatar(entity);
   const [mapOpen, setMapOpen] = useState(false);
+  const now = minuteTick.value;
 
   const activity = activityEntityId ? useEntity(activityEntityId).value : undefined;
   const driving = activity !== undefined && DRIVING_STATES.has(activity.state.toLowerCase());
@@ -102,6 +120,10 @@ export function PersonCard({
   const chipClass = isHome ? styles.chipHome : isAway ? styles.chipAway : styles.chipZone;
   // only show a street address (when away + enabled); no app/integration name
   const secondary = isAway && showAddress && address ? address : null;
+  // the device's last report: prefer the source tracker's timestamp
+  const lastSeen = showLastSeen
+    ? agoLabel(sourceEntity?.last_updated ?? entity.last_updated, now)
+    : '';
 
   return (
     <>
@@ -137,6 +159,9 @@ export function PersonCard({
               </span>
             )}
             {secondary && <span class={styles.device}>{secondary}</span>}
+            {showLastSeen && lastSeen && (
+              <span class={styles.checkedIn}>checked in {lastSeen}</span>
+            )}
           </div>
         </div>
         {batteryPct !== null && (

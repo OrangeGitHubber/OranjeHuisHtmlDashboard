@@ -124,6 +124,24 @@ export default function PresenceOptionsEditor({
         )}
 
         <div class={opt.row}>
+          Last checked-in time
+          <div class={opt.seg}>
+            <button
+              class={`${opt.segBtn}${!o.showLastSeen ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showLastSeen: false })}
+            >
+              Hide
+            </button>
+            <button
+              class={`${opt.segBtn}${o.showLastSeen ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ showLastSeen: true })}
+            >
+              Show
+            </button>
+          </div>
+        </div>
+
+        <div class={opt.row}>
           Driving detection
           <span class={opt.dim}>
             Pick each person's phone activity sensor; automotive states show a car badge.

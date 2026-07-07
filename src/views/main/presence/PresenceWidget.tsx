@@ -22,6 +22,8 @@ export interface PresenceOptions {
   geocode?: Record<string, string>;
   /** show the address line when a person is away (not in a known zone) */
   showAddress?: boolean;
+  /** show when each person's device last checked in */
+  showLastSeen?: boolean;
 }
 
 export default function PresenceWidget({ element }: ElementProps) {
@@ -59,6 +61,7 @@ export default function PresenceWidget({ element }: ElementProps) {
               activityEntityId={o.activity?.[p.entity_id]}
               geocodedEntityId={o.geocode?.[p.entity_id]}
               showAddress={o.showAddress === true}
+              showLastSeen={o.showLastSeen === true}
             />
           ))}
         </div>
