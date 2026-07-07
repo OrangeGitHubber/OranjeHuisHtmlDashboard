@@ -36,10 +36,14 @@
   overflow: hidden;
 }
 
-/* tiles fill their grid cell rather than keeping a fixed aspect ratio */
+/* tiles fill their grid cell exactly (drop the 16/9 aspect ratio, which
+   would otherwise derive a width from the height and overflow the column) */
 .camGrid > * {
+  width: 100%;
   height: 100%;
+  min-width: 0;
   min-height: 0;
+  aspect-ratio: auto;
 }
 
 .camHint {
