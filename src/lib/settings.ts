@@ -17,7 +17,7 @@ export interface PageDef {
   title: string;
   /** icon NAME from src/lib/icons.ts */
   icon: string;
-  kind: 'grid' | 'cameras';
+  kind: 'grid';
   /** per-page card-title default (element option > this > system setting) */
   showTitles?: boolean;
   /** ignored for kind 'cameras' */
@@ -99,16 +99,12 @@ function defaultMainPage(): PageDef {
   };
 }
 
-function defaultCamerasPage(): PageDef {
-  return { id: 'cameras', title: 'Cameras', icon: 'camera', kind: 'cameras', elements: [] };
-}
-
 function defaults(): AppSettings {
   return {
     version: 3,
     title: 'My Home',
     subtitle: 'Smart Dashboard',
-    pages: [defaultMainPage(), defaultCamerasPage()],
+    pages: [defaultMainPage()],
     theme: 'orange',
     colorMode: 'auto',
     cardOpacity: 100,
@@ -177,6 +173,8 @@ function normalizePages(raw: unknown): PageDef[] {
     for (const p of raw) {
       if (!p || typeof p !== 'object') continue;
       const pg = p as Record<string, unknown>;
+      // the built-in Cameras page was removed — drop any lingering ones
+      if (pg.kind === 'cameras') continue;
       let id = typeof pg.id === 'string' && pg.id && pg.id !== 'settings' ? pg.id : newId('p');
       while (seen.has(id)) id = newId('p');
       seen.add(id);
@@ -184,7 +182,7 @@ function normalizePages(raw: unknown): PageDef[] {
         id,
         title: typeof pg.title === 'string' && pg.title.trim() ? pg.title : 'Page',
         icon: typeof pg.icon === 'string' && pg.icon ? pg.icon : 'home',
-        kind: pg.kind === 'cameras' ? 'cameras' : 'grid',
+        kind: 'grid',
         elements: normalizeElements(pg.elements),
         ...(typeof pg.background === 'string' && pg.background
           ? { background: pg.background }
@@ -250,7 +248,7 @@ function migrateV1(r: Record<string, unknown>): Record<string, unknown> {
   // drop the v1 'widgets' key so it doesn't linger in exports via ...rest
   const rest: Record<string, unknown> = { ...r };
   delete rest.widgets;
-  return { ...rest, pages: [main, defaultCamerasPage()] };
+  return { ...rest, pages: [main] };
 }
 
 /** Coerces arbitrary (imported) JSON into a valid AppSettings, preserving unknown keys. */
@@ -262,7 +260,7 @@ function normalize(raw: unknown): AppSettings {
   // grid coordinates are in 12-col units up to v2; double them for v3
   let pages = normalizePages(r.pages);
   if (storedVersion < 3) pages = pages.map(doubleElements);
-  if (pages.length === 0) pages = [defaultMainPage(), defaultCamerasPage()];
+  if (pages.length === 0) pages = [defaultMainPage()];
   return {
     ...r, // preserve unknown top-level keys from newer versions
     version: 3,
@@ -363,12 +361,12 @@ function patchPage(pageId: string, patch: Partial<PageDef>): void {
   });
 }
 
-export function addPage(kind: 'grid' | 'cameras' = 'grid'): PageDef {
+export function addPage(): PageDef {
   const page: PageDef = {
     id: newId('p'),
-    title: kind === 'cameras' ? 'Cameras' : 'New page',
-    icon: kind === 'cameras' ? 'camera' : 'home',
-    kind,
+    title: 'New page',
+    icon: 'home',
+    kind: 'grid',
     elements: [],
   };
   updateSettings({ pages: [...settings.peek().pages, page] });

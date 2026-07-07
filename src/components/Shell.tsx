@@ -3,7 +3,7 @@ import { currentRoute } from '../lib/router';
 import { loadConfig } from '../lib/config';
 import { minuteTick } from '../lib/clock';
 import { useIdle } from '../lib/useIdle';
-import { camerasLoader, settingsLoader } from '../views/registry';
+import { settingsLoader } from '../views/registry';
 import { Nav } from './Nav';
 import { StatusBanner } from './StatusBanner';
 import { AsyncView } from './AsyncView';
@@ -32,12 +32,7 @@ export function Shell() {
     const page = pages.find((p) => p.id === route) ?? pages[0];
     bg = backgroundUrl(page.background);
     glass = page.backgroundGlass ?? 50;
-    content =
-      page.kind === 'cameras' ? (
-        <AsyncView key={page.id} load={camerasLoader} />
-      ) : (
-        <AsyncView key={page.id} load={gridPageLoader} props={{ pageId: page.id }} />
-      );
+    content = <AsyncView key={page.id} load={gridPageLoader} props={{ pageId: page.id }} />;
   }
 
   const s = settings.value;

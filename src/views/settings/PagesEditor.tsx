@@ -47,7 +47,6 @@ export function PagesEditor() {
               value={p.title}
               onInput={(e) => renamePage(p.id, (e.target as HTMLInputElement).value)}
             />
-            {p.kind === 'cameras' && <span class={styles.pageKind}>Cameras</span>}
             <select
               class={styles.pageTitleSel}
               title="Card titles on this page"
@@ -93,11 +92,6 @@ export function PagesEditor() {
         >
           ＋ Add page
         </button>
-        {!pages.some((p) => p.kind === 'cameras') && (
-          <button class={styles.fileBtn} onClick={() => addPage('cameras')}>
-            Add Cameras view
-          </button>
-        )}
       </div>
       {iconPage && (
         <IconPickerModal
