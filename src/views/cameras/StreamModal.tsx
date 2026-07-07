@@ -131,12 +131,14 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
             resolve(result);
           };
 
-          // success/failure is decided by the ICE connection outcome
+          // ICE connected commits us to WebRTC, but DON'T hide the snapshot
+          // yet — only real video frames (the <video> 'playing'/'loadeddata'
+          // events) do that. Otherwise a connected-but-frameless stream (e.g.
+          // RTSPS not enabled) shows a black box with no snapshot.
           localPc.addEventListener('iceconnectionstatechange', () => {
             const st = localPc.iceConnectionState;
             webrtcDiag = `WebRTC ICE ${st}`;
             if (st === 'connected' || st === 'completed') {
-              markPlaying();
               finish(true);
             } else if (st === 'failed') {
               finish(false);

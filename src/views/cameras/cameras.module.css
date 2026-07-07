@@ -29,11 +29,17 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  /* rows share the card height equally so tiles fill it (no empty space) */
+  grid-auto-rows: 1fr;
   gap: 8px;
-  align-content: start;
-  /* x hidden, y auto (avoids the single-axis overflow quirk) */
-  overflow: hidden auto;
+  overflow: hidden;
+}
+
+/* tiles fill their grid cell rather than keeping a fixed aspect ratio */
+.camGrid > * {
+  height: 100%;
+  min-height: 0;
 }
 
 .camHint {
