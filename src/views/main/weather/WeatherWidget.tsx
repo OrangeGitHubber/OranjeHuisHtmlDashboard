@@ -48,7 +48,7 @@ export default function WeatherWidget({ element }: ElementProps) {
   if (!entityId) {
     return (
       <div class={styles.card}>
-        <h2 class={styles.title}>Weather</h2>
+        <h2 class={`${styles.title} card-title`}>Weather</h2>
         <div class={styles.hint}>
           <p>No weather entity selected — tap this card in page edit mode to pick one.</p>
         </div>
@@ -59,7 +59,7 @@ export default function WeatherWidget({ element }: ElementProps) {
   if (!entity) {
     return (
       <div class={styles.card}>
-        <h2 class={styles.title}>Weather</h2>
+        <h2 class={`${styles.title} card-title`}>Weather</h2>
         <p class={styles.hintText}>
           Entity <code>{entityId}</code> was not found in Home Assistant.
         </p>
@@ -73,7 +73,7 @@ export default function WeatherWidget({ element }: ElementProps) {
 
   return (
     <div class={styles.card}>
-      <h2 class={styles.title}>Weather</h2>
+      <h2 class={`${styles.title} card-title`}>Weather</h2>
 
       <div class={styles.current}>
         <div class={styles.currentIcon}>{conditionIcon(entity.state, 54)}</div>

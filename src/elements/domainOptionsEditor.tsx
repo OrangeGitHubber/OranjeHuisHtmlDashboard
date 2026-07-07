@@ -3,7 +3,7 @@ import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement } from '../lib/settings';
 import { useEntitiesByDomain } from '../lib/ha/entities';
 import { friendlyName } from '../views/settings/EntitySelect';
-import { CardOpacityRow } from './CardOpacityRow';
+import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
 import type { GridElement } from '../grid/types';
 import opt from '../components/options.module.css';
 
@@ -67,6 +67,7 @@ export function makeDomainOptionsEditor(domain: string, label: string) {
               </li>
             ))}
           </ul>
+          <CardTitleRow pageId={pageId} element={element} />
           <CardOpacityRow pageId={pageId} element={element} />
           <div class={opt.footerRow}>
             <button

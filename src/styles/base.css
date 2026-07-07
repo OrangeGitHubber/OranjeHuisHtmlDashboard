@@ -202,6 +202,20 @@ video {
   color: var(--text-dim);
 }
 
+/* ---------- card titles ---------- */
+
+/* Elements mark their title with the global .card-title class.
+   Color: per-card --title-color (inline) > top-level --title-color (on
+   <html>) > theme accent. Visibility: .hide-card-title on the item wrapper
+   (per-card or system default) hides them. */
+.shell .card-title {
+  color: var(--title-color, var(--accent));
+}
+
+.hide-card-title .card-title {
+  display: none;
+}
+
 /* ---------- night dimming ---------- */
 
 /* an overlay (not a filter) so position:fixed elements keep working */

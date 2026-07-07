@@ -92,7 +92,7 @@ export default function GraphCard({ element }: ElementProps) {
   return (
     <div class={`${styles.card} ${styles.graphCard}`}>
       <div class={styles.graphHead}>
-        <span class={styles.name}>{title}</span>
+        <span class={`${styles.name} card-title`}>{title}</span>
         <span class={styles.graphWindow}>{hours >= 24 ? `${Math.round(hours / 24)}d` : `${hours}h`}</span>
       </div>
       <span class={styles.graphValue}>

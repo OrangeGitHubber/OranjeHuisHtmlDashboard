@@ -37,6 +37,10 @@ export interface AppSettings {
   colorMode: 'auto' | 'dark' | 'light';
   /** card/container background opacity in percent (30–100) */
   cardOpacity: number;
+  /** default for card titles (per-card option overrides) */
+  showTitles: boolean;
+  /** CSS color overriding the theme accent for card titles; '' = theme */
+  titleColor: string;
   /** dim the display during the configured window */
   nightDim: boolean;
   /** window start/end, 'HH:MM' (may wrap past midnight) */
@@ -94,6 +98,8 @@ function defaults(): AppSettings {
     theme: 'orange',
     colorMode: 'auto',
     cardOpacity: 100,
+    showTitles: true,
+    titleColor: '',
     nightDim: false,
     nightDimStart: '22:00',
     nightDimEnd: '07:00',
@@ -225,6 +231,8 @@ function normalize(raw: unknown): AppSettings {
       typeof r.cardOpacity === 'number' && Number.isFinite(r.cardOpacity)
         ? Math.min(Math.max(Math.round(r.cardOpacity), 30), 100)
         : base.cardOpacity,
+    showTitles: r.showTitles !== false,
+    titleColor: typeof r.titleColor === 'string' ? r.titleColor : '',
     nightDim: r.nightDim === true,
     nightDimStart: isTimeString(r.nightDimStart) ? r.nightDimStart : base.nightDimStart,
     nightDimEnd: isTimeString(r.nightDimEnd) ? r.nightDimEnd : base.nightDimEnd,
@@ -431,4 +439,6 @@ settings.subscribe((s) => {
   applyTheme(s.theme);
   applyColorMode(s.colorMode);
   document.documentElement.style.setProperty('--card-alpha', `${s.cardOpacity}%`);
+  if (s.titleColor) document.documentElement.style.setProperty('--title-color', s.titleColor);
+  else document.documentElement.style.removeProperty('--title-color');
 });

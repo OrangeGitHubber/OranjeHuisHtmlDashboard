@@ -37,7 +37,7 @@ export function CameraTile({
               : 'Loading…'}
         </div>
       )}
-      <span class={styles.name}>{name}</span>
+      <span class={`${styles.name} card-title`}>{name}</span>
       {stale && !unavailable && (
         <span class={styles.stale} title="Snapshot may be outdated">
           ⏱ stale

@@ -91,7 +91,7 @@ export default function MediaCard({ element }: ElementProps) {
         <div class={styles.mediaText}>
           <span class={styles.mediaTitle}>{title ?? entity.state.replace(/_/g, ' ')}</span>
           {artist && <span class={styles.mediaArtist}>{artist}</span>}
-          <span class={styles.name}>{name}</span>
+          <span class={`${styles.name} card-title`}>{name}</span>
         </div>
       </div>
       <div class={styles.mediaControls}>

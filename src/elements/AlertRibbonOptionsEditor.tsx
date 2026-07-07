@@ -1,7 +1,7 @@
 import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement, newId } from '../lib/settings';
 import { EntityPicker } from '../grid/EntityPicker';
-import { CardOpacityRow } from './CardOpacityRow';
+import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
 import type { AlertItem, AlertOp, AlertRibbonOptions } from './AlertRibbon';
 import opt from '../components/options.module.css';
@@ -94,6 +94,21 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
         )}
 
         <div class={opt.row}>
+          Alert card size
+          <div class={opt.seg}>
+            {(['s', 'm', 'l'] as const).map((sz) => (
+              <button
+                key={sz}
+                class={`${opt.segBtn}${(o.cardSize ?? 'm') === sz ? ` ${opt.segActive}` : ''}`}
+                onClick={() => set({ cardSize: sz })}
+              >
+                {sz.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div class={opt.row}>
           Add a device — pick it, then set its “display if…” condition above
           <EntityPicker
             onPick={(entityId) =>
@@ -102,6 +117,7 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
           />
         </div>
 
+        <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button

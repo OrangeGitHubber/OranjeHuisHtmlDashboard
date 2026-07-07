@@ -1,7 +1,7 @@
 import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement } from '../lib/settings';
 import { EntityPicker } from '../grid/EntityPicker';
-import { CardOpacityRow } from './CardOpacityRow';
+import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
 import type { GraphOptions } from './GraphCard';
 import opt from '../components/options.module.css';
@@ -60,6 +60,7 @@ export default function GraphOptionsEditor({ pageId, element, onClose }: EditorP
             onInput={(e) => set({ title: (e.target as HTMLInputElement).value })}
           />
         </label>
+        <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button

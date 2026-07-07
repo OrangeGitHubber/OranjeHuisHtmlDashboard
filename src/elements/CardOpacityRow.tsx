@@ -3,6 +3,60 @@ import type { GridElement } from '../grid/types';
 import opt from '../components/options.module.css';
 
 /**
+ * Shared per-element title controls: visibility (System/Show/Hide) and
+ * title color (theme/top-level default or an own color).
+ */
+export function CardTitleRow({ pageId, element }: { pageId: string; element: GridElement }) {
+  const rawShow = element.options?.showTitle;
+  const show = typeof rawShow === 'boolean' ? rawShow : null;
+  const rawColor = element.options?.titleColor;
+  const color = typeof rawColor === 'string' && rawColor ? rawColor : null;
+  const set = (patch: Record<string, unknown>) =>
+    updateElementOptions(pageId, element.id, patch);
+
+  return (
+    <div class={opt.row}>
+      Title
+      <div class={opt.seg}>
+        <button
+          class={`${opt.segBtn}${show === null ? ` ${opt.segActive}` : ''}`}
+          onClick={() => set({ showTitle: undefined })}
+          title="Follow Settings → Theme → Show card titles"
+        >
+          System
+        </button>
+        <button
+          class={`${opt.segBtn}${show === true ? ` ${opt.segActive}` : ''}`}
+          onClick={() => set({ showTitle: true })}
+        >
+          Show
+        </button>
+        <button
+          class={`${opt.segBtn}${show === false ? ` ${opt.segActive}` : ''}`}
+          onClick={() => set({ showTitle: false })}
+        >
+          Hide
+        </button>
+      </div>
+      <div class={opt.seg}>
+        <input
+          type="color"
+          value={color ?? '#f28c28'}
+          onChange={(e) => set({ titleColor: (e.target as HTMLInputElement).value })}
+          aria-label="Title color"
+        />
+        <button
+          class={`${opt.segBtn}${color === null ? ` ${opt.segActive}` : ''}`}
+          onClick={() => set({ titleColor: undefined })}
+        >
+          Default color
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Shared per-element card-opacity control for options editors. Undefined
  * option = follow Settings → Theme → Card opacity.
  */

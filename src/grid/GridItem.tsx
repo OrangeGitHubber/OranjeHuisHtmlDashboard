@@ -14,6 +14,7 @@ const X_ICON =
 export function GridItem({
   style,
   editing,
+  hideTitle,
   dragged,
   onStart,
   onMove,
@@ -24,6 +25,8 @@ export function GridItem({
 }: {
   style: JSX.CSSProperties;
   editing: boolean;
+  /** hides elements marked .card-title inside this item */
+  hideTitle?: boolean;
   dragged: boolean;
   onStart: (mode: 'move' | 'resize', clientX: number, clientY: number) => void;
   onMove: (clientX: number, clientY: number) => void;
@@ -57,7 +60,7 @@ export function GridItem({
 
   return (
     <div class={cls} style={style}>
-      <div class={styles.itemContent}>{children}</div>
+      <div class={`${styles.itemContent}${hideTitle ? ' hide-card-title' : ''}`}>{children}</div>
       {editing && (
         <>
           <div

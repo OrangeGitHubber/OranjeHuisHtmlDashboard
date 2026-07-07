@@ -127,7 +127,7 @@ export function WeekCalendar({ element }: ElementProps) {
   return (
     <section class={styles.week}>
       <header class={styles.weekHeader}>
-        <h2 class={styles.weekTitle}>
+        <h2 class={`${styles.weekTitle} card-title`}>
           {opt.icon && pageIcons[opt.icon] && (
             <svg class={styles.weekIcon} viewBox="0 0 24 24" aria-hidden="true">
               <path d={pageIcons[opt.icon]} fill="currentColor" />

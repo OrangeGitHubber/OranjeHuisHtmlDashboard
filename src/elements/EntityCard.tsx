@@ -216,7 +216,7 @@ export default function EntityCard({ element }: ElementProps) {
       role={onTap ? 'button' : undefined}
       aria-label={name}
     >
-      <span class={styles.name}>{name}</span>
+      <span class={`${styles.name} card-title`}>{name}</span>
       <div class={styles.cardBottom}>
         {subText && <span class={styles.sub}>{subText}</span>}
         <div class={styles.cardTop}>

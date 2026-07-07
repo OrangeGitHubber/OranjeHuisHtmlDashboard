@@ -18,7 +18,15 @@ export interface AlertItem {
 export interface AlertRibbonOptions {
   title?: string;
   items?: AlertItem[];
+  /** size of the cards inside the ribbon */
+  cardSize?: 's' | 'm' | 'l';
 }
+
+const CARD_SIZES: Record<string, { height: string; basis: string }> = {
+  s: { height: '64px', basis: '150px' },
+  m: { height: '84px', basis: '200px' },
+  l: { height: '116px', basis: '260px' },
+};
 
 export function alertActive(entity: HassEntity, it: AlertItem): boolean {
   const s = entity.state;
@@ -90,7 +98,7 @@ export default function AlertRibbon({ element }: ElementProps) {
   return (
     <div class={`${styles.card} ${styles.alertRibbon}`}>
       <div class={styles.graphHead}>
-        <span class={styles.name}>{title}</span>
+        <span class={`${styles.name} card-title`}>{title}</span>
         <span class={styles.graphWindow}>
           {items.length === 0 ? 'no rules' : `${active.length}/${items.length}`}
         </span>
@@ -101,11 +109,18 @@ export default function AlertRibbon({ element }: ElementProps) {
         <span class={styles.alertClear}>All clear ✓</span>
       ) : (
         <div class={styles.alertRow}>
-          {active.map((it) => (
-            <div key={it.id} class={styles.alertItem}>
-              <EntityCard pageId="" element={syntheticFor(it.entityId)} editing={false} />
-            </div>
-          ))}
+          {active.map((it) => {
+            const size = CARD_SIZES[o.cardSize ?? 'm'] ?? CARD_SIZES.m;
+            return (
+              <div
+                key={it.id}
+                class={styles.alertItem}
+                style={{ height: size.height, flexBasis: size.basis }}
+              >
+                <EntityCard pageId="" element={syntheticFor(it.entityId)} editing={false} />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@ import { settings, updateElementOptions, removeElement } from '../../lib/setting
 import { useEntitiesByDomain } from '../../lib/ha/entities';
 import { friendlyName } from '../settings/EntitySelect';
 import { pageIcons } from '../../lib/icons';
-import { CardOpacityRow } from '../../elements/CardOpacityRow';
+import { CardOpacityRow, CardTitleRow } from '../../elements/CardOpacityRow';
 import { calendarColor } from './useCalendarEvents';
 import type { GridElement } from '../../grid/types';
 import type { CalendarOptions } from './WeekCalendar';
@@ -214,6 +214,7 @@ export default function CalendarOptionsEditor({
           </ul>
         )}
 
+        <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button

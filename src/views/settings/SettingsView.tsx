@@ -71,6 +71,35 @@ export default function SettingsView() {
             </button>
           ))}
         </div>
+        <label class={styles.checkItem}>
+          <input
+            type="checkbox"
+            checked={s.showTitles}
+            onChange={(e) =>
+              updateSettings({ showTitles: (e.target as HTMLInputElement).checked })
+            }
+          />
+          Show card titles (each card can override this)
+        </label>
+        <div class={styles.field}>
+          Title color
+          <div class={styles.modeRow}>
+            <input
+              type="color"
+              value={s.titleColor || '#f28c28'}
+              onChange={(e) =>
+                updateSettings({ titleColor: (e.target as HTMLInputElement).value })
+              }
+              aria-label="Title color"
+            />
+            <button
+              class={`${styles.modeBtn}${!s.titleColor ? ` ${styles.modeActive}` : ''}`}
+              onClick={() => updateSettings({ titleColor: '' })}
+            >
+              Theme accent
+            </button>
+          </div>
+        </div>
         <label class={styles.field}>
           Card opacity · {s.cardOpacity}%
           <input

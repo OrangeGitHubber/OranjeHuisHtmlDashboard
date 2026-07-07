@@ -1,7 +1,7 @@
 import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement } from '../lib/settings';
 import { EntityPicker } from '../grid/EntityPicker';
-import { CardOpacityRow } from './CardOpacityRow';
+import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
 import opt from '../components/options.module.css';
 
@@ -28,6 +28,7 @@ export default function EntityOptionsEditor({ pageId, element, onClose }: Editor
             onPick={(entityId) => updateElementOptions(pageId, element.id, { entityId })}
           />
         </div>
+        <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button

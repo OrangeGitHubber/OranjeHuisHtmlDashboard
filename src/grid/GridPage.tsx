@@ -87,8 +87,20 @@ export default function GridPage({ pageId }: { pageId: string }) {
           if (typeof elAlpha === 'number' && Number.isFinite(elAlpha)) {
             stackStyle['--card-alpha'] = `${Math.min(Math.max(elAlpha, 30), 100)}%`;
           }
+          const stackTitle =
+            typeof el.options?.showTitle === 'boolean'
+              ? el.options.showTitle
+              : settings.value.showTitles;
+          const stackTitleColor = el.options?.titleColor;
+          if (typeof stackTitleColor === 'string' && stackTitleColor) {
+            stackStyle['--title-color'] = stackTitleColor;
+          }
           return (
-            <section key={el.id} class={styles.stackItem} style={stackStyle}>
+            <section
+              key={el.id}
+              class={`${styles.stackItem}${stackTitle ? '' : ' hide-card-title'}`}
+              style={stackStyle}
+            >
               {def ? (
                 <AsyncView load={def.load} props={{ pageId, element: el, editing: false }} />
               ) : (
@@ -217,6 +229,14 @@ export default function GridPage({ pageId }: { pageId: string }) {
           if (typeof elAlpha === 'number' && Number.isFinite(elAlpha)) {
             style = { ...style, '--card-alpha': `${Math.min(Math.max(elAlpha, 30), 100)}%` };
           }
+          const showTitle =
+            typeof el.options?.showTitle === 'boolean'
+              ? el.options.showTitle
+              : settings.value.showTitles;
+          const titleColor = el.options?.titleColor;
+          if (typeof titleColor === 'string' && titleColor) {
+            style = { ...style, '--title-color': titleColor };
+          }
           if (isDragged && drag) {
             if (drag.mode === 'move') {
               style = {
@@ -237,6 +257,7 @@ export default function GridPage({ pageId }: { pageId: string }) {
               key={el.id}
               style={style}
               editing={editing}
+              hideTitle={!showTitle}
               dragged={isDragged}
               onStart={(mode, cx, cy) =>
                 setDrag({

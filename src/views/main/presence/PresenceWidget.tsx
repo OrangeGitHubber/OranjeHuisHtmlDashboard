@@ -33,7 +33,7 @@ export default function PresenceWidget({ element }: ElementProps) {
 
   return (
     <div class={styles.card}>
-      <h2 class={styles.title}>
+      <h2 class={`${styles.title} card-title`}>
         Family
         {shown.length > 0 && (
           <span class={styles.count}>
