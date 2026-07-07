@@ -27,9 +27,13 @@ export interface CalendarOptions {
   calendars?: string[] | null;
   /** show the "updated Xm ago" hint (default true) */
   showUpdated?: boolean;
-  /** show the per-calendar color dot on entries (default true) */
+  /** legacy: false hid the color dot (superseded by marker) */
   showDots?: boolean;
+  /** per-entry calendar-color marker: hidden, a dot, or a left bar */
+  marker?: 'hide' | 'dot' | 'bar';
 }
+
+export type EntryMarker = 'hide' | 'dot' | 'bar';
 
 export function calendarOptionsOf(element: ElementProps['element']): Required<CalendarOptions> {
   const o = (element.options ?? {}) as CalendarOptions;
@@ -49,6 +53,8 @@ export function calendarOptionsOf(element: ElementProps['element']): Required<Ca
     calendars: o.calendars !== undefined ? o.calendars : settings.value.calendars.selected,
     showUpdated: o.showUpdated !== false,
     showDots: o.showDots !== false,
+    // marker wins; else derive from the legacy showDots flag
+    marker: (o.marker ?? (o.showDots === false ? 'hide' : 'dot')) as EntryMarker,
   };
 }
 
@@ -157,18 +163,28 @@ export function WeekCalendar({ element }: ElementProps) {
           <button onClick={refresh}>Retry</button>
         </div>
       ) : opt.mode === 'agenda' ? (
-        <AgendaList events={events} count={opt.count} loading={loading} dots={opt.showDots} />
+        <AgendaList events={events} count={opt.count} loading={loading} marker={opt.marker} />
       ) : (
         <WeekBoard
           events={events}
           days={opt.days}
           vertical={opt.vertical}
           loading={loading}
-          dots={opt.showDots}
+          marker={opt.marker}
         />
       )}
     </section>
   );
+}
+
+function eventProps(marker: EntryMarker, id: string) {
+  if (marker === 'bar') {
+    return {
+      class: `${styles.event} ${styles.eventBarred}`,
+      style: { borderLeftColor: calendarColor(id) },
+    };
+  }
+  return { class: styles.event, style: undefined };
 }
 
 function WeekBoard({
@@ -176,13 +192,13 @@ function WeekBoard({
   days,
   vertical,
   loading,
-  dots,
+  marker,
 }: {
   events: CalendarEvent[];
   days: number;
   vertical: boolean;
   loading: boolean;
-  dots: boolean;
+  marker: EntryMarker;
 }) {
   const board = buildDays(events, days);
   return (
@@ -208,8 +224,8 @@ function WeekBoard({
                 </>
               ) : (
                 day.events.map((ev, i) => (
-                  <div class={styles.event} key={i} title={ev.calendarName}>
-                    {dots && (
+                  <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>
+                    {marker === 'dot' && (
                       <span
                         class={styles.eventDot}
                         style={{ background: calendarColor(ev.calendarId) }}
@@ -234,12 +250,12 @@ function AgendaList({
   events,
   count,
   loading,
-  dots,
+  marker,
 }: {
   events: CalendarEvent[];
   count: number;
   loading: boolean;
-  dots: boolean;
+  marker: EntryMarker;
 }) {
   const now = new Date();
   const upcoming = events.filter((ev) => ev.end > now).slice(0, count);
@@ -256,8 +272,8 @@ function AgendaList({
         <p class={styles.agendaEmpty}>No upcoming entries.</p>
       )}
       {upcoming.map((ev, i) => (
-        <div class={styles.event} key={i} title={ev.calendarName}>
-          {dots && (
+        <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>
+          {marker === 'dot' && (
             <span class={styles.eventDot} style={{ background: calendarColor(ev.calendarId) }} />
           )}
           <div class={styles.eventText}>

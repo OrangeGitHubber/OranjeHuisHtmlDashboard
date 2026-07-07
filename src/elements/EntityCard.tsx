@@ -245,9 +245,25 @@ export default function EntityCard({ element }: ElementProps) {
       mainText = title;
       subText = stateText(entity);
     }
-  } else if (domain === 'light' && isOn) {
-    const b = entity.attributes.brightness;
-    if (typeof b === 'number') mainText = `On · ${Math.round((b / 255) * 100)}%`;
+  }
+
+  // Domains whose state is a plain on/off (or open/closed, locked/unlocked):
+  // the icon color already signals it, so don't repeat it as text. Keep
+  // richer values (light brightness, sensor readings, temps, media titles).
+  const ICON_STATE_DOMAINS = new Set([
+    'light',
+    'switch',
+    'input_boolean',
+    'lock',
+    'binary_sensor',
+    'cover',
+  ]);
+  if (ICON_STATE_DOMAINS.has(domain) && !unavailable && entity.state !== 'unknown') {
+    mainText = '';
+    if (domain === 'light' && isOn) {
+      const b = entity.attributes.brightness;
+      if (typeof b === 'number') mainText = `${Math.round((b / 255) * 100)}%`;
+    }
   }
 
   // fixed decimals for numeric (temperature etc.) sensors, when configured

@@ -13,22 +13,33 @@ export interface AlertItem {
   op: AlertOp;
   /** comparison value for gt/lt/eq/ne */
   value?: string;
-  /** per-card size override (falls back to the ribbon's cardSize) */
-  size?: 's' | 'm' | 'l';
 }
 
 export interface AlertRibbonOptions {
   title?: string;
   items?: AlertItem[];
-  /** size of the cards inside the ribbon */
+  /** card size in px (user-controlled) */
+  cardWidth?: number;
+  cardHeight?: number;
+  /** legacy S/M/L preset, mapped to px for older configs */
   cardSize?: 's' | 'm' | 'l';
 }
 
-const CARD_SIZES: Record<string, { height: string; basis: string }> = {
-  s: { height: '64px', basis: '150px' },
-  m: { height: '84px', basis: '200px' },
-  l: { height: '116px', basis: '260px' },
+const LEGACY_SIZES: Record<string, { w: number; h: number }> = {
+  s: { w: 150, h: 64 },
+  m: { w: 200, h: 90 },
+  l: { w: 260, h: 120 },
 };
+
+export const DEFAULT_ALERT_CARD = { w: 200, h: 90 };
+
+export function alertCardSize(o: AlertRibbonOptions): { w: number; h: number } {
+  const legacy = o.cardSize ? LEGACY_SIZES[o.cardSize] : undefined;
+  return {
+    w: typeof o.cardWidth === 'number' ? o.cardWidth : (legacy?.w ?? DEFAULT_ALERT_CARD.w),
+    h: typeof o.cardHeight === 'number' ? o.cardHeight : (legacy?.h ?? DEFAULT_ALERT_CARD.h),
+  };
+}
 
 export function alertActive(entity: HassEntity, it: AlertItem): boolean {
   const s = entity.state;
@@ -80,6 +91,7 @@ export default function AlertRibbon({ element }: ElementProps) {
   const o = (element.options ?? {}) as AlertRibbonOptions;
   const items = Array.isArray(o.items) ? o.items : [];
   const title = o.title?.trim() || 'Alerts';
+  const size = alertCardSize(o);
 
   // useEntity is a plain signal getter (not a hook), safe in a loop
   const active = items.filter((it) => {
@@ -108,18 +120,15 @@ export default function AlertRibbon({ element }: ElementProps) {
         <span class={styles.alertClear}>All clear ✓</span>
       ) : (
         <div class={styles.alertRow}>
-          {active.map((it) => {
-            const size = CARD_SIZES[it.size ?? o.cardSize ?? 'm'] ?? CARD_SIZES.m;
-            return (
-              <div
-                key={it.id}
-                class={styles.alertItem}
-                style={{ height: size.height, width: size.basis }}
-              >
-                <EntityCard pageId="" element={syntheticFor(it.entityId)} editing={false} />
-              </div>
-            );
-          })}
+          {active.map((it) => (
+            <div
+              key={it.id}
+              class={styles.alertItem}
+              style={{ width: `${size.w}px`, height: `${size.h}px` }}
+            >
+              <EntityCard pageId="" element={syntheticFor(it.entityId)} editing={false} />
+            </div>
+          ))}
         </div>
       )}
     </div>

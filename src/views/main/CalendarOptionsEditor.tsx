@@ -233,20 +233,26 @@ export default function CalendarOptionsEditor({
         </div>
 
         <div class={opt.row}>
-          Calendar color dots on entries
+          Calendar color marker on entries
           <div class={opt.seg}>
-            <button
-              class={`${opt.segBtn}${o.showDots !== false ? ` ${opt.segActive}` : ''}`}
-              onClick={() => set({ showDots: undefined })}
-            >
-              Show
-            </button>
-            <button
-              class={`${opt.segBtn}${o.showDots === false ? ` ${opt.segActive}` : ''}`}
-              onClick={() => set({ showDots: false })}
-            >
-              Hide
-            </button>
+            {(
+              [
+                ['hide', 'Hide'],
+                ['dot', 'Dots'],
+                ['bar', 'Bar'],
+              ] as const
+            ).map(([val, label]) => {
+              const cur = o.marker ?? (o.showDots === false ? 'hide' : 'dot');
+              return (
+                <button
+                  key={val}
+                  class={`${opt.segBtn}${cur === val ? ` ${opt.segActive}` : ''}`}
+                  onClick={() => set({ marker: val, showDots: undefined })}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -3,7 +3,7 @@ import { updateElementOptions, removeElement, newId } from '../lib/settings';
 import { EntityPicker } from '../grid/EntityPicker';
 import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
-import type { AlertItem, AlertOp, AlertRibbonOptions } from './AlertRibbon';
+import { alertCardSize, type AlertItem, type AlertOp, type AlertRibbonOptions } from './AlertRibbon';
 import opt from '../components/options.module.css';
 
 const OPS: { op: AlertOp; label: string }[] = [
@@ -88,21 +88,6 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
                       }
                     />
                   )}
-                  <select
-                    value={it.size ?? ''}
-                    title="Card size"
-                    onChange={(e) => {
-                      const v = (e.target as HTMLSelectElement).value;
-                      patchItem(it.id, {
-                        size: v === 's' || v === 'm' || v === 'l' ? v : undefined,
-                      });
-                    }}
-                  >
-                    <option value="">Size</option>
-                    <option value="s">S</option>
-                    <option value="m">M</option>
-                    <option value="l">L</option>
-                  </select>
                   <button
                     class={opt.close}
                     onClick={() => moveItem(it.id, -1)}
@@ -132,20 +117,28 @@ export default function AlertRibbonOptionsEditor({ pageId, element, onClose }: E
           </div>
         )}
 
-        <div class={opt.row}>
-          Alert card size
-          <div class={opt.seg}>
-            {(['s', 'm', 'l'] as const).map((sz) => (
-              <button
-                key={sz}
-                class={`${opt.segBtn}${(o.cardSize ?? 'm') === sz ? ` ${opt.segActive}` : ''}`}
-                onClick={() => set({ cardSize: sz })}
-              >
-                {sz.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
+        <label class={opt.row}>
+          Card width · {alertCardSize(o).w}px
+          <input
+            type="range"
+            min={120}
+            max={420}
+            step={10}
+            value={alertCardSize(o).w}
+            onInput={(e) => set({ cardWidth: Number((e.target as HTMLInputElement).value) })}
+          />
+        </label>
+        <label class={opt.row}>
+          Card height · {alertCardSize(o).h}px
+          <input
+            type="range"
+            min={56}
+            max={220}
+            step={4}
+            value={alertCardSize(o).h}
+            onInput={(e) => set({ cardHeight: Number((e.target as HTMLInputElement).value) })}
+          />
+        </label>
 
         <div class={opt.row}>
           Add a device — pick it, then set its “display if…” condition above

@@ -171,6 +171,12 @@
   padding: 6px 8px;
 }
 
+/* left vertical color bar variant (border color set inline) */
+.eventBarred {
+  border-left: 3px solid var(--accent);
+  padding-left: 8px;
+}
+
 .eventDot {
   flex: 0 0 auto;
   width: 8px;

@@ -8,13 +8,20 @@ import { Spinner } from '../../components/Spinner';
 import { useSnapshot } from './useSnapshot';
 import styles from './cameras.module.css';
 
+const START_TIMEOUT_MS = 15_000;
+
+/**
+ * Live camera view. Tries WebRTC first (this is what HA's own UI uses for
+ * UniFi Protect / go2rtc), falling back to HLS. Playback is detected from
+ * the <video> element's own events, and a hard timeout guarantees the user
+ * always gets feedback instead of an endless spinner.
+ */
 export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const pressedBackdrop = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(true);
   const name = (entity.attributes.friendly_name as string | undefined) ?? entity.entity_id;
-  // fallback for cameras that can't stream: keep showing fresh snapshots
   const { src: snapshotSrc } = useSnapshot(
     entity.entity_id,
     0,
@@ -23,23 +30,111 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
 
   useEffect(() => {
     let cancelled = false;
+    let started = false;
     let hls: HlsType | null = null;
+    let pc: RTCPeerConnection | null = null;
+    let unsub: (() => void) | null = null;
+    const video = videoRef.current;
 
-    // CameraEntityFeature.STREAM = 2; without it a camera/stream request
-    // can only fail ("does not support play stream service")
+    const markPlaying = () => {
+      if (cancelled) return;
+      started = true;
+      window.clearTimeout(timeout);
+      setStarting(false);
+    };
+
+    const timeout = window.setTimeout(() => {
+      if (cancelled || started) return;
+      setError(
+        'Timed out starting the live stream. This camera may only stream over WebRTC that could not connect, or the stream is not reachable through your reverse proxy. Snapshots still update below.',
+      );
+      setStarting(false);
+    }, START_TIMEOUT_MS);
+
+    if (video) {
+      video.addEventListener('playing', markPlaying);
+      video.addEventListener('loadeddata', markPlaying);
+    }
+
     const features =
       typeof entity.attributes.supported_features === 'number'
         ? entity.attributes.supported_features
         : 0;
     const canStream = (features & 2) !== 0;
-    if (!canStream) {
-      setError(
-        'This camera entity does not offer a live stream (in UniFi Protect, enable RTSPS for this channel, then reload the integration — or pick a streamable channel entity for this card).',
-      );
-      setStarting(false);
+
+    // ---- WebRTC (matches HA's frontend) ----
+    async function tryWebRTC(): Promise<boolean> {
+      if (!video || typeof RTCPeerConnection === 'undefined') return false;
+      try {
+        const conn = await getConnection();
+        pc = new RTCPeerConnection({ iceServers: [] });
+        pc.addTransceiver('video', { direction: 'recvonly' });
+        pc.addTransceiver('audio', { direction: 'recvonly' });
+        pc.addEventListener('track', (ev) => {
+          if (cancelled) return;
+          if (video.srcObject !== ev.streams[0]) {
+            video.srcObject = ev.streams[0];
+            video.play().catch(() => {});
+          }
+        });
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        // non-trickle: give ICE a moment to gather host candidates
+        await new Promise<void>((res) => {
+          if (!pc || pc.iceGatheringState === 'complete') return res();
+          const t = window.setTimeout(res, 2000);
+          pc.addEventListener('icegatheringstatechange', () => {
+            if (pc && pc.iceGatheringState === 'complete') {
+              window.clearTimeout(t);
+              res();
+            }
+          });
+        });
+        if (cancelled || !pc) return false;
+        const sdp = pc.localDescription?.sdp;
+        if (!sdp) return false;
+
+        return await new Promise<boolean>((resolve) => {
+          let settled = false;
+          const finish = (ok: boolean) => {
+            if (!settled) {
+              settled = true;
+              resolve(ok);
+            }
+          };
+          conn
+            .subscribeMessage<{ type: string; answer?: string; candidate?: string }>(
+              (msg) => {
+                if (cancelled || !pc) return;
+                if (msg.type === 'answer' && msg.answer) {
+                  pc.setRemoteDescription({ type: 'answer', sdp: msg.answer }).catch(() => {});
+                  finish(true);
+                } else if (msg.type === 'candidate' && msg.candidate) {
+                  pc.addIceCandidate({ candidate: msg.candidate, sdpMLineIndex: 0 }).catch(
+                    () => {},
+                  );
+                } else if (msg.type === 'error') {
+                  finish(false);
+                }
+              },
+              { type: 'camera/webrtc/offer', entity_id: entity.entity_id, offer: sdp },
+            )
+            .then((u) => {
+              unsub = u;
+            })
+            .catch(() => finish(false)); // command unknown on old HA → fall back
+          // no answer in time → abandon WebRTC, let HLS try
+          window.setTimeout(() => finish(false), 6000);
+        });
+      } catch {
+        return false;
+      }
     }
 
-    canStream && (async () => {
+    // ---- HLS fallback ----
+    async function tryHLS(): Promise<void> {
+      if (!video) return;
       try {
         const conn = await getConnection();
         const { url } = await conn.sendMessagePromise<{ url: string }>({
@@ -49,48 +144,66 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
         const cfg = loadConfig();
         if (!cfg) throw new Error('not configured');
         const streamUrl = cfg.hassUrl + url;
-        const video = videoRef.current;
-        if (!video || cancelled) return;
+        if (cancelled) return;
 
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          // iOS / Safari: native HLS
-          video.src = streamUrl;
-          await video.play().catch(() => {});
-          if (!cancelled) setStarting(false);
+          video.src = streamUrl; // iOS / Safari native HLS
+          video.play().catch(() => {});
         } else {
-          // everyone else: hls.js, loaded on demand (its own chunk)
           const { default: Hls } = await import('hls.js');
           if (cancelled) return;
-          if (!Hls.isSupported()) throw new Error('HLS unsupported');
+          if (!Hls.isSupported()) throw new Error('HLS unsupported in this browser');
           hls = new Hls({ liveSyncDurationCount: 3, enableWorker: true });
           hls.loadSource(streamUrl);
           hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            setStarting(false);
-            video.play().catch(() => {});
-          });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
           hls.on(Hls.Events.ERROR, (_ev, data) => {
-            if (data.fatal && !cancelled) {
+            if (data.fatal && !cancelled && !started) {
               setError(
-                `The live stream failed (${data.type}: ${data.details}). If this is a network error, the HLS segments may not be reachable through your proxy.`,
+                `The live stream failed (${data.type}: ${data.details}). WebRTC also did not connect — snapshots still update below.`,
               );
+              setStarting(false);
+              window.clearTimeout(timeout);
             }
           });
         }
       } catch (err) {
-        if (!cancelled) {
-          // surface HA's actual error (e.g. "stream component not loaded")
-          const msg =
-            err instanceof Error
-              ? err.message
-              : err && typeof err === 'object' && 'message' in err
-                ? String((err as { message: unknown }).message)
-                : '';
-          setError(
-            `Could not start the live stream${msg ? ` — ${msg}` : ''}. Check that the stream integration is enabled in Home Assistant.`,
-          );
-          setStarting(false);
+        if (cancelled || started) return;
+        const msg =
+          err instanceof Error
+            ? err.message
+            : err && typeof err === 'object' && 'message' in err
+              ? String((err as { message: unknown }).message)
+              : '';
+        setError(
+          `Could not start the live stream${msg ? ` — ${msg}` : ''}. Snapshots still update below.`,
+        );
+        setStarting(false);
+        window.clearTimeout(timeout);
+      }
+    }
+
+    (async () => {
+      if (!canStream) {
+        setError(
+          'This camera entity does not offer a live stream (in UniFi Protect, enable RTSPS for this channel and reload the integration, or point this card at a streamable channel entity). Snapshots still update below.',
+        );
+        setStarting(false);
+        window.clearTimeout(timeout);
+        return;
+      }
+      const rtcOk = await tryWebRTC();
+      if (cancelled || started) return;
+      if (!rtcOk) {
+        if (pc) {
+          pc.close();
+          pc = null;
         }
+        if (unsub) {
+          unsub();
+          unsub = null;
+        }
+        await tryHLS();
       }
     })();
 
@@ -101,11 +214,16 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
       window.removeEventListener('keydown', onKey);
+      if (unsub) unsub();
+      if (pc) pc.close();
       if (hls) hls.destroy();
-      const video = videoRef.current;
       if (video) {
+        video.removeEventListener('playing', markPlaying);
+        video.removeEventListener('loadeddata', markPlaying);
         video.pause();
+        video.srcObject = null;
         video.removeAttribute('src');
         video.load();
       }
@@ -140,7 +258,7 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
           {error && snapshotSrc && (
             <>
               <img class={styles.fallbackSnap} src={snapshotSrc} alt={name} />
-              <div class={styles.fallbackNote}>Snapshots only — {error}</div>
+              <div class={styles.fallbackNote}>{error}</div>
             </>
           )}
           {error && !snapshotSrc && <div class={styles.videoOverlay}>{error}</div>}
