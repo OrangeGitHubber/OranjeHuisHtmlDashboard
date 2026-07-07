@@ -116,6 +116,26 @@ export default function SettingsView() {
         <label class={styles.checkItem}>
           <input
             type="checkbox"
+            checked={s.showRefresh}
+            onChange={(e) =>
+              updateSettings({ showRefresh: (e.target as HTMLInputElement).checked })
+            }
+          />
+          Show the refresh button (lower-left corner)
+        </label>
+        <label class={styles.checkItem}>
+          <input
+            type="checkbox"
+            checked={s.checkUpdates}
+            onChange={(e) =>
+              updateSettings({ checkUpdates: (e.target as HTMLInputElement).checked })
+            }
+          />
+          Show a banner when a new version is deployed
+        </label>
+        <label class={styles.checkItem}>
+          <input
+            type="checkbox"
             checked={s.nightDim}
             onChange={(e) => updateSettings({ nightDim: (e.target as HTMLInputElement).checked })}
           />

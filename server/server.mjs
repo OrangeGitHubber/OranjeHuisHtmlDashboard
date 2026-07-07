@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { serveStatic } from './static.mjs';
 import { handleConfig } from './api.mjs';
+import { handleVersion } from './version.mjs';
 import { proxyRest, attachWsProxy } from './ha-proxy.mjs';
 
 const PORT = Number(process.env.PORT) || 80;
@@ -8,11 +9,13 @@ const PORT = Number(process.env.PORT) || 80;
 const server = createServer((req, res) => {
   const path = (req.url || '/').split('?')[0];
   const handled =
-    path.startsWith('/config/')
-      ? handleConfig(req, res)
-      : path.startsWith('/ha/')
-        ? proxyRest(req, res)
-        : serveStatic(req, res);
+    path === '/version'
+      ? handleVersion(req, res)
+      : path.startsWith('/config/')
+        ? handleConfig(req, res)
+        : path.startsWith('/ha/')
+          ? proxyRest(req, res)
+          : serveStatic(req, res);
   Promise.resolve(handled).catch((err) => {
     console.error('request failed', err);
     if (!res.headersSent) res.writeHead(500);

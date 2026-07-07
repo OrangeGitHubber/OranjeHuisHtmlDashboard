@@ -124,7 +124,7 @@ export default function PresenceOptionsEditor({
         )}
 
         <div class={opt.row}>
-          Last checked-in time
+          Last update time
           <div class={opt.seg}>
             <button
               class={`${opt.segBtn}${!o.showLastSeen ? ` ${opt.segActive}` : ''}`}

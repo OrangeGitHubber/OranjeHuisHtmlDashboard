@@ -159,20 +159,24 @@ export function PersonCard({
               </span>
             )}
             {secondary && <span class={styles.device}>{secondary}</span>}
-            {showLastSeen && lastSeen && (
-              <span class={styles.checkedIn}>checked in {lastSeen}</span>
-            )}
           </div>
         </div>
-        {batteryPct !== null && (
-          <div class={styles.battery}>
-            <div class={styles.battTrack}>
-              <div
-                class={`${styles.battFill} ${batteryClass}`}
-                style={{ width: `${batteryPct}%` }}
-              />
-            </div>
-            <span class={styles.battPct}>{batteryPct}%</span>
+        {(batteryPct !== null || (showLastSeen && lastSeen)) && (
+          <div class={styles.cardFoot}>
+            {showLastSeen && lastSeen && (
+              <span class={styles.lastUpdate}>Last update: {lastSeen}</span>
+            )}
+            {batteryPct !== null && (
+              <div class={styles.battery}>
+                <div class={styles.battTrack}>
+                  <div
+                    class={`${styles.battFill} ${batteryClass}`}
+                    style={{ width: `${batteryPct}%` }}
+                  />
+                </div>
+                <span class={styles.battPct}>{batteryPct}%</span>
+              </div>
+            )}
           </div>
         )}
       </div>

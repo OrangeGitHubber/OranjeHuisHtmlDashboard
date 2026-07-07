@@ -3,6 +3,7 @@ import { App } from './app';
 import { fetchServerConfig } from './lib/config';
 import { getConnection } from './lib/ha/connection';
 import { initProfiles } from './lib/settings';
+import { startVersionWatch } from './lib/version';
 import './styles/theme.css';
 import './styles/base.css';
 
@@ -18,5 +19,7 @@ fetchServerConfig().then((cfg) => {
     });
   }
 });
+
+startVersionWatch();
 
 render(<App />, document.getElementById('app')!);

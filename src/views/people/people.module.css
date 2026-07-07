@@ -86,8 +86,16 @@
   white-space: nowrap;
 }
 
-.checkedIn {
-  font-size: 0.68rem;
+/* bottom cluster: last-update line sits right-aligned above the battery bar */
+.cardFoot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lastUpdate {
+  align-self: flex-end;
+  font-size: 0.66rem;
   color: var(--text-dim);
   white-space: nowrap;
 }

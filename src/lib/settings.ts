@@ -53,6 +53,12 @@ export interface AppSettings {
   showTitles: boolean;
   /** CSS color overriding the theme accent for card titles; '' = theme */
   titleColor: string;
+  /** width of the left navigation sidebar in px (wide screens) */
+  navWidth: number;
+  /** show the lower-left refresh button */
+  showRefresh: boolean;
+  /** poll for new deploys and show a "please refresh" banner */
+  checkUpdates: boolean;
   /** dim the display during the configured window */
   nightDim: boolean;
   /** window start/end, 'HH:MM' (may wrap past midnight) */
@@ -122,6 +128,9 @@ function defaults(): AppSettings {
     cardOpacity: 100,
     showTitles: true,
     titleColor: '',
+    navWidth: 92,
+    showRefresh: true,
+    checkUpdates: true,
     nightDim: false,
     nightDimStart: '22:00',
     nightDimEnd: '07:00',
@@ -288,6 +297,12 @@ function normalize(raw: unknown): AppSettings {
         : base.cardOpacity,
     showTitles: r.showTitles !== false,
     titleColor: typeof r.titleColor === 'string' ? r.titleColor : '',
+    navWidth:
+      typeof r.navWidth === 'number' && Number.isFinite(r.navWidth)
+        ? Math.min(Math.max(Math.round(r.navWidth), 60), 320)
+        : base.navWidth,
+    showRefresh: r.showRefresh !== false,
+    checkUpdates: r.checkUpdates !== false,
     nightDim: r.nightDim === true,
     nightDimStart: isTimeString(r.nightDimStart) ? r.nightDimStart : base.nightDimStart,
     nightDimEnd: isTimeString(r.nightDimEnd) ? r.nightDimEnd : base.nightDimEnd,
@@ -432,6 +447,10 @@ export function setSelectedCalendars(ids: string[] | null): void {
   updateSettings({ calendars: { selected: ids } });
 }
 
+export function setNavWidth(px: number): void {
+  updateSettings({ navWidth: Math.min(Math.max(Math.round(px), 60), 320) });
+}
+
 export function setTheme(id: string): void {
   updateSettings({ theme: id });
 }
@@ -574,6 +593,7 @@ settings.subscribe((s) => {
   applyTheme(s.theme);
   applyColorMode(s.colorMode);
   document.documentElement.style.setProperty('--card-alpha', `${s.cardOpacity}%`);
+  document.documentElement.style.setProperty('--nav-width', `${s.navWidth}px`);
   if (s.titleColor) document.documentElement.style.setProperty('--title-color', s.titleColor);
   else document.documentElement.style.removeProperty('--title-color');
 });

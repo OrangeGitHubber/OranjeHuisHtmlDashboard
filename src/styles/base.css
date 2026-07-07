@@ -125,11 +125,39 @@ video {
     flex-direction: column;
     justify-content: flex-start;
     gap: 6px;
-    width: 92px;
+    width: var(--nav-width, 92px);
     height: 100dvh;
     padding: 14px 10px;
     border-top: none;
     border-right: 1px solid var(--border);
+  }
+
+  /* draggable divider on the sidebar's right edge */
+  .nav-resize {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 12;
+    touch-action: none;
+  }
+
+  .nav-resize::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 3px;
+    width: 2px;
+    height: 100%;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .nav-resize:hover::after,
+  .nav-resize.dragging::after {
+    background: var(--accent);
   }
 
   .nav-item {
@@ -202,6 +230,15 @@ video {
   color: var(--text-dim);
 }
 
+.banner-update {
+  display: block;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: #1d1206;
+}
+
 /* ---------- card titles ---------- */
 
 /* Elements mark their title with the global .card-title class.
@@ -216,13 +253,24 @@ video {
   display: none;
 }
 
-/* ---------- refresh button (lower-left, kiosk-friendly) ---------- */
+/* ---------- lower-left corner: refresh button + current dashboard ---------- */
 
-.refresh-fab {
+.corner-bl {
   position: fixed;
   left: 18px;
   bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
   z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none; /* let clicks pass except on the children */
+}
+
+.corner-bl > * {
+  pointer-events: auto;
+}
+
+.refresh-fab {
   width: 44px;
   height: 44px;
   display: grid;
@@ -251,10 +299,26 @@ video {
   height: 22px;
 }
 
+.corner-profile {
+  max-width: 40vw;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* clear the left sidebar on wide screens */
 @media (min-width: 768px) {
-  .refresh-fab {
-    left: calc(92px + 18px);
+  .corner-bl {
+    left: calc(var(--nav-width, 92px) + 18px);
     bottom: 22px;
   }
 }

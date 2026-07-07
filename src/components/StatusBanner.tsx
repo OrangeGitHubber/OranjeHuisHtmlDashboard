@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { connectionStatus, disconnectedSince } from '../lib/ha/connection';
+import { updateAvailable } from '../lib/version';
+import { settings } from '../lib/settings';
 
 function formatElapsed(sinceMs: number): string {
   const s = Math.max(0, Math.floor((Date.now() - sinceMs) / 1000));
@@ -31,6 +33,13 @@ export function StatusBanner() {
       <div class="banner banner-info" role="status">
         Connecting to Home Assistant…
       </div>
+    );
+  }
+  if (updateAvailable.value && settings.value.checkUpdates) {
+    return (
+      <button class="banner banner-update" onClick={() => location.reload()}>
+        A new version has been deployed. Please refresh.
+      </button>
     );
   }
   return null;
