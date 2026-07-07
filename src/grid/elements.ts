@@ -86,7 +86,8 @@ export const elementDefs: Record<string, ElementDef> = {
     load: () => import('../elements/GraphCard'),
     optionsLoader: () => import('../elements/GraphOptionsEditor'),
     defaultSize: { w: 8, h: 6 },
-    minSize: { w: 4, h: 4 },
+    // low floor so the compact tile layout can be made small
+    minSize: { w: 3, h: 2 },
   },
   presence: {
     type: 'presence',
