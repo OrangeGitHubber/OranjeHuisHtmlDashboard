@@ -1,4 +1,4 @@
-# Home Assistant setup for Oranjehuis
+# Home Assistant setup for HAView
 
 The dashboard container connects to Home Assistant on your behalf (it reverse-proxies HA),
 so there are only two one-time steps — **no CORS configuration is needed** anymore.
@@ -6,7 +6,7 @@ so there are only two one-time steps — **no CORS configuration is needed** any
 ## 1. Create a long-lived access token
 
 1. In Home Assistant, click your user (bottom left) → **Security** tab.
-2. Scroll to **Long-lived access tokens** → **Create token**, name it e.g. `oranjehuis`.
+2. Scroll to **Long-lived access tokens** → **Create token**, name it e.g. `haview`.
 3. Paste it into the dashboard's setup screen **once**. It is stored in the container
    (the `/data` volume) and used by the server — it is never sent to any browser, so you
    never enter it per device.

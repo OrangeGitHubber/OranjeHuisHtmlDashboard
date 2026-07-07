@@ -1,4 +1,4 @@
-# Oranjehuis
+# HAView
 
 A fast, self-hosted dashboard for Home Assistant — built for wall-mounted displays and
 phones. Static Preact + TypeScript app that talks directly to HA's WebSocket and REST
@@ -58,7 +58,7 @@ On unraid, add a container from that image (Docker tab → Add Container):
 
 - **Repository**: `ghcr.io/<owner>/<repo>:latest`
 - **Port**: host `8090` → container `80`
-- **Path**: host `/mnt/user/appdata/oranjehuis` → container `/data` (stores the HA
+- **Path**: host `/mnt/user/appdata/haview` → container `/data` (stores the HA
   connection + config profiles; **required** for shared/persistent config)
 
 First load shows a setup screen — enter the HA URL + token once. Updating = push to GitHub,
@@ -74,7 +74,7 @@ docker compose -f deploy/docker-compose.yml up -d --build   # serves on :8090, /
 ## Adding an element type
 
 Pages and navigation are user data (settings v3, stored server-side as config profiles and
-cached in `localStorage` under `oranjehuis.settings.v3`), so there is nothing to code for a
+cached in `localStorage` under `haview.settings.v3`), so there is nothing to code for a
 new page. To add a new placeable element type:
 
 1. Create the component (see `src/elements/EntityCard.tsx` for the entity card, or the

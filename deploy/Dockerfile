@@ -1,4 +1,4 @@
-# Build: docker build -f deploy/Dockerfile -t oranjehuis .   (run from repo root)
+# Build: docker build -f deploy/Dockerfile -t haview .   (run from repo root)
 
 # 1. Build the SPA
 FROM node:22-alpine AS build

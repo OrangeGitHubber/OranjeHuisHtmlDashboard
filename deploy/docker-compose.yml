@@ -6,14 +6,14 @@
 # (map it to an appdata path). They are entered ONCE from any browser via the
 # setup screen — no per-device configuration and no env vars needed.
 services:
-  oranjehuis:
-    image: oranjehuis:latest
+  haview:
+    image: haview:latest
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    container_name: oranjehuis
+    container_name: haview
     ports:
       - '8090:80'
     volumes:
-      - /mnt/user/appdata/oranjehuis:/data
+      - /mnt/user/appdata/haview:/data
     restart: unless-stopped

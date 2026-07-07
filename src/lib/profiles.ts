@@ -9,7 +9,7 @@ export interface ProfileInfo {
   template: boolean;
 }
 
-const SEL_KEY = 'oranjehuis.profile';
+const SEL_KEY = 'haview.profile';
 
 export function currentProfileName(): string {
   try {

@@ -11,7 +11,7 @@ export function ExportImport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'oranjehuis-settings.json';
+    a.download = 'haview-settings.json';
     a.click();
     URL.revokeObjectURL(url);
   }

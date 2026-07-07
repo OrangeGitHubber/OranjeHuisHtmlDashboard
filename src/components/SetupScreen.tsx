@@ -38,7 +38,7 @@ export function SetupScreen({
           <svg viewBox="0 0 32 32" aria-hidden="true">
             <path d="M16 6 L27 15 H24 V25 H19 V18 H13 V25 H8 V15 H5 Z" fill="var(--accent)" />
           </svg>
-          Oranjehuis
+          HAView
         </h1>
         <p class="setup-hint">
           Connect the dashboard to your Home Assistant. This is stored once in the container and

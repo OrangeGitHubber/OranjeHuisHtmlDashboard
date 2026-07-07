@@ -24,5 +24,5 @@ const server = createServer((req, res) => {
 attachWsProxy(server);
 
 server.listen(PORT, () => {
-  console.log(`oranjehuis server listening on :${PORT}`);
+  console.log(`haview server listening on :${PORT}`);
 });

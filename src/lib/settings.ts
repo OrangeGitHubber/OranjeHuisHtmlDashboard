@@ -67,7 +67,9 @@ export interface AppSettings {
 
 // v3 doubled the grid resolution (12→24 cols, 56→28px rows); older keys are
 // kept so a rollback to a previous image still finds its config.
-const KEY = 'oranjehuis.settings.v3';
+const KEY = 'haview.settings.v3';
+// older/renamed cache keys, read once for migration then rewritten under KEY
+const OLD_V3_KEY = 'oranjehuis.settings.v3';
 const V2_KEY = 'oranjehuis.settings.v2';
 const V1_KEY = 'oranjehuis.settings.v1';
 const LEGACY_CALENDARS_KEY = 'oranjehuis.selectedCalendars.v1';
@@ -315,10 +317,13 @@ function normalize(raw: unknown): AppSettings {
 
 function load(): AppSettings {
   try {
-    const v3 = localStorage.getItem(KEY);
-    if (v3) return normalize(JSON.parse(v3));
-    // migrate from an older key and persist so the doubling runs only once
-    const older = localStorage.getItem(V2_KEY) ?? localStorage.getItem(V1_KEY);
+    const cur = localStorage.getItem(KEY);
+    if (cur) return normalize(JSON.parse(cur));
+    // migrate from an older/renamed key and persist so it runs only once
+    const older =
+      localStorage.getItem(OLD_V3_KEY) ??
+      localStorage.getItem(V2_KEY) ??
+      localStorage.getItem(V1_KEY);
     if (older) {
       const migrated = normalize(JSON.parse(older));
       localStorage.setItem(KEY, JSON.stringify(migrated));
@@ -547,7 +552,7 @@ export function importSettings(json: string): { ok: true } | { ok: false; error:
   }
   const version = (raw as { version?: unknown }).version;
   if (typeof version !== 'number') {
-    return { ok: false, error: 'Not an Oranjehuis settings file (missing version).' };
+    return { ok: false, error: 'Not a HAView settings file (missing version).' };
   }
   persist(normalize(raw));
   return { ok: true };
