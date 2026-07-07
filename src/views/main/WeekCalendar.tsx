@@ -209,7 +209,7 @@ function WeekBoard({
 }) {
   const board = buildDays(events, days);
   const stacked = vertical || narrow;
-  const collapsible = narrow; // on phones, collapse every day except today
+  const collapsible = narrow; // on phones, every day (incl. today) collapses
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
   const toggle = (t: number) =>
     setExpanded((prev) => {
@@ -247,7 +247,7 @@ function WeekBoard({
       >
         {board.map((day) => {
           const t = day.start.getTime();
-          const collapse = collapsible && !day.isToday;
+          const collapse = collapsible;
           const open = !collapse || expanded.has(t);
           return (
             <div key={t} class={`${styles.day}${day.isToday ? ` ${styles.today}` : ''}`}>

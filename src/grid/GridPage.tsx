@@ -78,7 +78,13 @@ export default function GridPage({ pageId }: { pageId: string }) {
         {elements.length === 0 && (
           <EmptyState message="This page is empty. Use a wider screen to edit its layout." />
         )}
-        {stackOrder(elements).map((el) => {
+        {stackOrder(elements)
+          .filter((el) => {
+            // per-element hide-on-phones; the clock is hidden by default
+            const raw = el.options?.hideOnMobile;
+            return typeof raw === 'boolean' ? !raw : el.type !== 'clock';
+          })
+          .map((el) => {
           const def = elementDefs[el.type];
           const stackStyle: Record<string, string> = {
             minHeight: `min(${el.h * (ROW + GAP) - GAP}px, 60vh)`,

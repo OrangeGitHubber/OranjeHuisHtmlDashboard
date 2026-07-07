@@ -9,6 +9,8 @@ export interface ClockOptions {
   size?: 's' | 'm' | 'l' | 'xl';
   /** CSS color for the time; undefined = theme text color */
   color?: string;
+  /** hide on phones (<700px); undefined defaults to hidden for the clock */
+  hideOnMobile?: boolean;
 }
 
 const SIZES: { id: ClockOptions['size']; label: string }[] = [
@@ -62,6 +64,16 @@ export default function ClockOptionsEditor({ pageId, element, onClose }: EditorP
             </button>
           </div>
         </div>
+        <label class={opt.checkItem}>
+          <input
+            type="checkbox"
+            checked={o.hideOnMobile === false}
+            onChange={(e) =>
+              set({ hideOnMobile: (e.target as HTMLInputElement).checked ? false : true })
+            }
+          />
+          Show on phones (hidden by default)
+        </label>
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button
