@@ -131,20 +131,22 @@
 /* hourly strip */
 
 .hourlyScroll {
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
+/* one column per hour, each an equal fraction so the row fills the width */
 .hourlyRow {
-  display: flex;
-  gap: 6px;
-  min-width: max-content;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
 }
 
 .hourlyItem {
   display: grid;
   justify-items: center;
   gap: 2px;
-  padding: 6px 9px;
+  padding: 6px 2px;
   border-radius: var(--radius-sm);
   font-size: 0.72rem;
   color: var(--text-dim);
