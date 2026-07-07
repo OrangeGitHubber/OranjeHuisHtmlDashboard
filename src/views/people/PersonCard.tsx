@@ -3,12 +3,12 @@ import type { HassEntity } from 'home-assistant-js-websocket';
 import { getSignedUrl } from '../../lib/ha/signedPath';
 import { loadConfig } from '../../lib/config';
 import { useEntity } from '../../lib/ha/entities';
-import { minuteTick, relativeSince } from '../../lib/clock';
 import { PersonMapModal } from './PersonMapModal';
 import styles from './people.module.css';
 
 const CAR_ICON =
   'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z';
+const HOME_ICON = 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z';
 
 /** Companion-app activity states that mean "in a car". */
 const DRIVING_STATES = new Set(['automotive', 'in_vehicle', 'driving', 'auto']);
@@ -22,7 +22,6 @@ function usePersonAvatar(entity: HassEntity): string | null {
     setUrl(null);
     if (!picture) return;
     if (picture.startsWith('/api/')) {
-      // authenticated path — needs a signed URL
       getSignedUrl(picture, 30 * 60)
         .then((u) => alive && setUrl(u))
         .catch(() => {});
@@ -48,6 +47,11 @@ function initials(name: string): string {
     .join('');
 }
 
+function num(v: unknown): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function PersonCard({
   entity,
   activityEntityId,
@@ -56,15 +60,13 @@ export function PersonCard({
 }: {
   entity: HassEntity;
   activityEntityId?: string;
-  /** companion-app "Geocoded Location" sensor; its state is the address */
   geocodedEntityId?: string;
-  /** show the address line when the person is not in a known zone */
   showAddress?: boolean;
 }) {
   const name = (entity.attributes.friendly_name as string | undefined) ?? entity.entity_id;
   const avatar = usePersonAvatar(entity);
-  const now = minuteTick.value;
   const [mapOpen, setMapOpen] = useState(false);
+
   const activity = activityEntityId ? useEntity(activityEntityId).value : undefined;
   const driving = activity !== undefined && DRIVING_STATES.has(activity.state.toLowerCase());
   const geocoded = geocodedEntityId ? useEntity(geocodedEntityId).value : undefined;
@@ -73,12 +75,36 @@ export function PersonCard({
       ? geocoded.state
       : null;
 
+  // the person's active tracker gives the device name; battery comes from
+  // the companion app's battery sensor (best-effort, hidden if not found)
+  const source = typeof entity.attributes.source === 'string' ? entity.attributes.source : '';
+  const base = source.includes('.') ? source.split('.')[1] : '';
+  const sourceEntity = useEntity(source || '__none__').value;
+  const battA = useEntity(base ? `sensor.${base}_battery_level` : '__none__').value;
+  const battB = useEntity(base ? `sensor.${base}_battery` : '__none__').value;
+  const deviceName =
+    (sourceEntity?.attributes.friendly_name as string | undefined) ??
+    (base ? base.replace(/_/g, ' ') : '');
+  const battery =
+    num(sourceEntity?.attributes.battery_level) ??
+    (battA ? num(battA.state) : null) ??
+    (battB ? num(battB.state) : null);
+  const batteryPct = battery !== null ? Math.max(0, Math.min(100, Math.round(battery))) : null;
+  const batteryClass =
+    batteryPct === null
+      ? ''
+      : batteryPct <= 15
+        ? styles.battLow
+        : batteryPct <= 30
+          ? styles.battMid
+          : styles.battOk;
+
   const state = entity.state;
   const isHome = state === 'home';
   const isAway = state === 'not_home';
-  // any other state is the name of the zone the person is in
   const label = isHome ? 'Home' : isAway ? 'Away' : state;
   const chipClass = isHome ? styles.chipHome : isAway ? styles.chipAway : styles.chipZone;
+  const secondary = isAway && showAddress && address ? address : deviceName;
 
   return (
     <>
@@ -88,25 +114,44 @@ export function PersonCard({
         role="button"
         aria-label={`Show ${name} on the map`}
       >
-        {avatar ? (
-          <img class={styles.avatar} src={avatar} alt={name} />
-        ) : (
-          <div class={styles.avatarFallback}>{initials(name)}</div>
-        )}
-        <div class={styles.info}>
-          <span class={styles.name}>{name}</span>
-          <span class={styles.since}>{relativeSince(entity.last_changed, now)}</span>
-          {showAddress && isAway && address && <span class={styles.address}>{address}</span>}
+        <div class={styles.cardMain}>
+          {avatar ? (
+            <img class={styles.avatar} src={avatar} alt={name} />
+          ) : (
+            <div class={styles.avatarFallback}>{initials(name)}</div>
+          )}
+          <div class={styles.info}>
+            <span class={styles.name}>{name}</span>
+            {driving ? (
+              <span class={`${styles.chip} ${styles.chipDriving}`}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d={CAR_ICON} fill="currentColor" />
+                </svg>
+                Driving
+              </span>
+            ) : (
+              <span class={`${styles.chip} ${chipClass}`}>
+                {isHome && (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d={HOME_ICON} fill="currentColor" />
+                  </svg>
+                )}
+                {label}
+              </span>
+            )}
+            {secondary && <span class={styles.device}>{secondary}</span>}
+          </div>
         </div>
-        {driving ? (
-          <span class={`${styles.chip} ${styles.chipDriving}`} title={`Driving · ${label}`}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d={CAR_ICON} fill="currentColor" />
-            </svg>
-            Driving
-          </span>
-        ) : (
-          <span class={`${styles.chip} ${chipClass}`}>{label}</span>
+        {batteryPct !== null && (
+          <div class={styles.battery}>
+            <div class={styles.battTrack}>
+              <div
+                class={`${styles.battFill} ${batteryClass}`}
+                style={{ width: `${batteryPct}%` }}
+              />
+            </div>
+            <span class={styles.battPct}>{batteryPct}%</span>
+          </div>
         )}
       </div>
       {mapOpen && (

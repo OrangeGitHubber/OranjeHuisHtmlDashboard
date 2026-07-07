@@ -34,6 +34,7 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
     let hls: HlsType | null = null;
     let pc: RTCPeerConnection | null = null;
     let unsub: (() => void) | null = null;
+    let webrtcDiag = '';
     const video = videoRef.current;
 
     const markPlaying = () => {
@@ -46,7 +47,7 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
     const timeout = window.setTimeout(() => {
       if (cancelled || started) return;
       setError(
-        'Timed out starting the live stream. This camera may only stream over WebRTC that could not connect, or the stream is not reachable through your reverse proxy. Snapshots still update below.',
+        `Timed out starting the live stream.${webrtcDiag ? ` (${webrtcDiag})` : ''} The stream may not be reachable from this device — snapshots still update below.`,
       );
       setStarting(false);
     }, START_TIMEOUT_MS);
@@ -62,13 +63,17 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
         : 0;
     const canStream = (features & 2) !== 0;
 
-    // ---- WebRTC (matches HA's frontend) ----
-    // Uses local refs and cleans up after itself on failure, handing the
-    // connection off to the effect-scope pc/unsub only on success.
+    // ---- WebRTC (matches HA's frontend: trickle ICE over camera/webrtc/*) ----
+    // Local refs; cleans up on failure, hands off to effect-scope pc/unsub
+    // only on success.
     async function tryWebRTC(): Promise<boolean> {
       if (!video || typeof RTCPeerConnection === 'undefined') return false;
-      const localPc = new RTCPeerConnection({ iceServers: [] });
+      const localPc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      });
       let localUnsub: (() => void) | null = null;
+      let sessionId: string | null = null;
+      const pending: RTCIceCandidate[] = [];
       const giveUp = (): false => {
         if (localUnsub) localUnsub();
         localPc.close();
@@ -86,42 +91,84 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
           }
         });
 
+        const sendCandidate = (cand: RTCIceCandidate | null) => {
+          const sid = sessionId;
+          if (!cand || !sid) return;
+          conn
+            .sendMessagePromise({
+              type: 'camera/webrtc/candidate',
+              entity_id: entity.entity_id,
+              session_id: sid,
+              candidate: cand.toJSON(),
+            })
+            .catch(() => {});
+        };
+        localPc.addEventListener('icecandidate', (ev) => {
+          if (cancelled) return;
+          if (!sessionId) {
+            if (ev.candidate) pending.push(ev.candidate);
+          } else {
+            sendCandidate(ev.candidate);
+          }
+        });
+
         const offer = await localPc.createOffer();
         await localPc.setLocalDescription(offer);
-        // non-trickle: give ICE a moment to gather host candidates
-        await new Promise<void>((res) => {
-          if (localPc.iceGatheringState === 'complete') return res();
-          const t = window.setTimeout(res, 2000);
-          localPc.addEventListener('icegatheringstatechange', () => {
-            if (localPc.iceGatheringState === 'complete') {
-              window.clearTimeout(t);
-              res();
-            }
-          });
-        });
         const sdp = localPc.localDescription?.sdp;
         if (cancelled || !sdp) return giveUp();
 
-        const answered = await new Promise<boolean>((resolve) => {
+        const ok = await new Promise<boolean>((resolve) => {
           let settled = false;
-          const finish = (ok: boolean) => {
-            if (!settled) {
-              settled = true;
-              resolve(ok);
+          const finish = (result: boolean) => {
+            if (settled) return;
+            settled = true;
+            if (result) {
+              pc = localPc;
+              unsub = localUnsub;
+            } else {
+              giveUp();
             }
+            resolve(result);
           };
+
+          // success/failure is decided by the ICE connection outcome
+          localPc.addEventListener('iceconnectionstatechange', () => {
+            const st = localPc.iceConnectionState;
+            webrtcDiag = `WebRTC ICE ${st}`;
+            if (st === 'connected' || st === 'completed') {
+              markPlaying();
+              finish(true);
+            } else if (st === 'failed') {
+              finish(false);
+            }
+          });
+
           conn
-            .subscribeMessage<{ type: string; answer?: string; candidate?: string }>(
+            .subscribeMessage<{
+              type: string;
+              answer?: string;
+              candidate?: string | RTCIceCandidateInit;
+              session_id?: string;
+              error?: { message?: string };
+            }>(
               (msg) => {
                 if (cancelled) return;
-                if (msg.type === 'answer' && msg.answer) {
-                  localPc.setRemoteDescription({ type: 'answer', sdp: msg.answer }).catch(() => {});
-                  finish(true);
-                } else if (msg.type === 'candidate' && msg.candidate) {
+                if (msg.type === 'session' && msg.session_id) {
+                  sessionId = msg.session_id;
+                  for (const c of pending) sendCandidate(c);
+                  pending.length = 0;
+                } else if (msg.type === 'answer' && msg.answer) {
+                  webrtcDiag = 'WebRTC answer received';
                   localPc
-                    .addIceCandidate({ candidate: msg.candidate, sdpMLineIndex: 0 })
+                    .setRemoteDescription({ type: 'answer', sdp: msg.answer })
                     .catch(() => {});
+                } else if (msg.type === 'candidate' && msg.candidate) {
+                  const c = msg.candidate;
+                  const init: RTCIceCandidateInit =
+                    typeof c === 'string' ? { candidate: c, sdpMLineIndex: 0 } : c;
+                  localPc.addIceCandidate(init).catch(() => {});
                 } else if (msg.type === 'error') {
+                  webrtcDiag = `WebRTC rejected: ${msg.error?.message ?? 'error'}`;
                   finish(false);
                 }
               },
@@ -130,16 +177,16 @@ export function StreamModal({ entity, onClose }: { entity: HassEntity; onClose: 
             .then((u) => {
               localUnsub = u;
             })
-            .catch(() => finish(false)); // command unknown on old HA → fall back
-          // no answer in time → abandon WebRTC, let HLS try
-          window.setTimeout(() => finish(false), 6000);
+            .catch(() => {
+              webrtcDiag = 'WebRTC not supported by this Home Assistant';
+              finish(false);
+            });
+
+          // overall cap on the WebRTC attempt → fall back to HLS
+          window.setTimeout(() => finish(false), 10_000);
         });
 
-        if (!answered || cancelled) return giveUp();
-        // success: hand off so the effect cleanup tears it down
-        pc = localPc;
-        unsub = localUnsub;
-        return true;
+        return ok;
       } catch {
         return giveUp();
       }

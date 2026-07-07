@@ -7,18 +7,19 @@
 
 .list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
 }
 
+/* compact person card: avatar + info on top, battery bar at the bottom */
 .card {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
   background: var(--surface-card, var(--surface));
   border: 1px solid var(--border-card, var(--border));
   border-radius: var(--radius);
-  padding: 14px 16px;
+  padding: 12px;
   box-shadow: var(--shadow-card, var(--shadow-sm));
   cursor: pointer;
   transition:
@@ -30,11 +31,18 @@
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
 }
 
+.cardMain {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
 .avatar,
 .avatarFallback {
   flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -45,41 +53,97 @@
   background: var(--accent-dim);
   color: var(--accent);
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
 
 .info {
   flex: 1;
   min-width: 0;
   display: grid;
+  gap: 3px;
+  justify-items: start;
 }
 
 .name {
-  font-weight: 600;
+  font-weight: 650;
+  font-size: 0.95rem;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.since {
-  font-size: 0.78rem;
+.device {
+  font-size: 0.72rem;
   color: var(--text-dim);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chip {
-  flex: 0 0 auto;
-  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
   border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.74rem;
+  font-weight: 650;
   transition:
     background 0.25s ease,
     color 0.25s ease;
 }
 
+.chip svg {
+  width: 13px;
+  height: 13px;
+}
+
 .chipHome {
   background: color-mix(in srgb, var(--green) 18%, transparent);
   color: var(--green);
+}
+
+/* battery bar */
+.battery {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.battTrack {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.battFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.battOk {
+  background: var(--green);
+}
+
+.battMid {
+  background: var(--yellow);
+}
+
+.battLow {
+  background: var(--red);
+}
+
+.battPct {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .chipAway {

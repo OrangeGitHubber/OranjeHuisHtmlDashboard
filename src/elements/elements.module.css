@@ -194,6 +194,12 @@
   flex: 0 0 auto;
 }
 
+/* alert cards always show their entity name, even when titles are hidden
+   globally/per-page — knowing WHAT is alerting is the whole point */
+.alertRow :global(.card-title) {
+  display: block !important;
+}
+
 .alertClear {
   flex: 1;
   display: grid;
