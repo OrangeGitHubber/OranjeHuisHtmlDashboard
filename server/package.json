@@ -1,0 +1,10 @@
+{
+  "name": "oranjehuis-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Serves the built dashboard, reverse-proxies Home Assistant, and stores config profiles.",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
