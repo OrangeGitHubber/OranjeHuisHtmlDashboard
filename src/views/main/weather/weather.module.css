@@ -131,7 +131,10 @@
 /* hourly strip */
 
 .hourlyScroll {
-  overflow-x: hidden;
+  /* both axes hidden: overflow-x:hidden alone makes overflow-y compute to
+     auto, which popped a stray vertical scrollbar */
+  overflow: hidden;
+  min-width: 0;
 }
 
 /* one column per hour, each an equal fraction so the row fills the width */
