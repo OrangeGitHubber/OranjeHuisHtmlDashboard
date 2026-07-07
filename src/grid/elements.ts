@@ -72,6 +72,14 @@ export const elementDefs: Record<string, ElementDef> = {
     defaultSize: { w: 6, h: 3 },
     minSize: { w: 4, h: 3 },
   },
+  alerts: {
+    type: 'alerts',
+    title: 'Alert ribbon',
+    load: () => import('../elements/AlertRibbon'),
+    optionsLoader: () => import('../elements/AlertRibbonOptionsEditor'),
+    defaultSize: { w: 12, h: 2 },
+    minSize: { w: 2, h: 1 },
+  },
   graph: {
     type: 'graph',
     title: 'History graph',

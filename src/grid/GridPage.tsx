@@ -80,12 +80,15 @@ export default function GridPage({ pageId }: { pageId: string }) {
         )}
         {stackOrder(elements).map((el) => {
           const def = elementDefs[el.type];
+          const stackStyle: Record<string, string> = {
+            minHeight: `min(${el.h * (ROW + GAP) - GAP}px, 60vh)`,
+          };
+          const elAlpha = el.options?.opacity;
+          if (typeof elAlpha === 'number' && Number.isFinite(elAlpha)) {
+            stackStyle['--card-alpha'] = `${Math.min(Math.max(elAlpha, 30), 100)}%`;
+          }
           return (
-            <section
-              key={el.id}
-              class={styles.stackItem}
-              style={{ minHeight: `min(${el.h * (ROW + GAP) - GAP}px, 60vh)` }}
-            >
+            <section key={el.id} class={styles.stackItem} style={stackStyle}>
               {def ? (
                 <AsyncView load={def.load} props={{ pageId, element: el, editing: false }} />
               ) : (
@@ -209,6 +212,11 @@ export default function GridPage({ pageId }: { pageId: string }) {
           const def = elementDefs[el.type];
           const isDragged = drag !== null && drag.id === el.id;
           let style: Record<string, string> = pxRect(el);
+          // per-element card opacity overrides the global setting
+          const elAlpha = el.options?.opacity;
+          if (typeof elAlpha === 'number' && Number.isFinite(elAlpha)) {
+            style = { ...style, '--card-alpha': `${Math.min(Math.max(elAlpha, 30), 100)}%` };
+          }
           if (isDragged && drag) {
             if (drag.mode === 'move') {
               style = {

@@ -7,6 +7,7 @@ import {
   entityEntries,
   type EntityEntry,
 } from '../lib/ha/registries';
+import { CardOpacityRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
 import opt from '../components/options.module.css';
 
@@ -81,6 +82,7 @@ export default function EntityOptionsEditor({ pageId, element, onClose }: Editor
             ))}
           </ul>
         )}
+        <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button
             class={opt.removeBtn}

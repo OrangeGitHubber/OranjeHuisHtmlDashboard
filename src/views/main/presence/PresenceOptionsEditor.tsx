@@ -2,6 +2,7 @@ import { Modal } from '../../../components/Modal';
 import { settings, updateElementOptions, removeElement } from '../../../lib/settings';
 import { useEntitiesByDomain } from '../../../lib/ha/entities';
 import { friendlyName } from '../../settings/EntitySelect';
+import { CardOpacityRow } from '../../../elements/CardOpacityRow';
 import type { GridElement } from '../../../grid/types';
 import type { PresenceOptions } from './PresenceWidget';
 import opt from '../../../components/options.module.css';
@@ -196,6 +197,7 @@ export default function PresenceOptionsEditor({
           </p>
         )}
 
+        <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button
             class={opt.removeBtn}

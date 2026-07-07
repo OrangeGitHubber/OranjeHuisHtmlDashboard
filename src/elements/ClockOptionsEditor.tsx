@@ -1,5 +1,6 @@
 import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement } from '../lib/settings';
+import { CardOpacityRow } from './CardOpacityRow';
 import type { EditorProps } from './domainOptionsEditor';
 import opt from '../components/options.module.css';
 
@@ -61,6 +62,7 @@ export default function ClockOptionsEditor({ pageId, element, onClose }: EditorP
             </button>
           </div>
         </div>
+        <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>
           <button
             class={opt.removeBtn}

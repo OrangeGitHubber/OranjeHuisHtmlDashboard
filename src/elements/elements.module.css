@@ -170,6 +170,39 @@
   color: var(--text-dim);
 }
 
+/* ---------- alert ribbon ---------- */
+
+.alertRibbon {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.alertRow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: flex-start;
+  overflow-y: auto;
+}
+
+.alertItem {
+  flex: 1 1 200px;
+  max-width: 320px;
+  min-width: 160px;
+  height: 84px;
+}
+
+.alertClear {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 /* ---------- history graph card ---------- */
 
 .graphCard {
