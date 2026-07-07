@@ -240,7 +240,7 @@ function WeekBoard({
     );
 
   return (
-    <div class={stacked ? '' : styles.weekScroll}>
+    <div class={stacked ? styles.weekStack : styles.weekScroll}>
       <div
         class={stacked ? styles.weekGridV : styles.weekGrid}
         style={stacked ? undefined : { gridTemplateColumns: `repeat(${days}, minmax(158px, 1fr))` }}
