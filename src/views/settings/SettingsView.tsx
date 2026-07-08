@@ -12,12 +12,13 @@ export default function SettingsView() {
 
   return (
     <div class={styles.page}>
-      <h1 class="view-title">Settings</h1>
+      <h1 class={`view-title ${styles.pageTitle}`}>Settings</h1>
 
+      <p class={styles.groupLabel}>General</p>
       <section class={styles.section}>
-        <h2>General</h2>
+        <h2>Dashboard</h2>
         <label class={styles.field}>
-          Dashboard title
+          Title
           <input
             type="text"
             value={s.title}
@@ -34,18 +35,9 @@ export default function SettingsView() {
         </label>
       </section>
 
-      <section class={styles.section}>
-        <h2>Pages</h2>
-        <p class={styles.dim}>
-          Add and arrange the pages in the navigation. Edit a page's layout with the ✎ button on
-          the page itself.
-        </p>
-        <PagesEditor />
-      </section>
-
+      <p class={styles.groupLabel}>Appearance</p>
       <section class={styles.section}>
         <h2>Theme</h2>
-        <p class={styles.dim}>Appearance</p>
         <div class={styles.modeRow}>
           {(['auto', 'dark', 'light'] as const).map((m) => (
             <button
@@ -57,7 +49,6 @@ export default function SettingsView() {
             </button>
           ))}
         </div>
-        <p class={styles.dim}>Accent color for this display.</p>
         <div class={styles.themeRow}>
           {themes.map((t) => (
             <button
@@ -72,6 +63,10 @@ export default function SettingsView() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section class={styles.section}>
+        <h2>Card titles</h2>
         <label class={styles.checkItem}>
           <input
             type="checkbox"
@@ -101,35 +96,117 @@ export default function SettingsView() {
             </button>
           </div>
         </div>
-        <label class={styles.field}>
-          Card opacity · {s.cardOpacity}%
+      </section>
+
+      <section class={styles.section}>
+        <h2>Sizing</h2>
+        <div class={styles.fieldRow}>
+          <label class={styles.field}>
+            Card opacity · {s.cardOpacity}%
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={s.cardOpacity}
+              onInput={(e) =>
+                updateSettings({ cardOpacity: Number((e.target as HTMLInputElement).value) })
+              }
+            />
+          </label>
+          <label class={styles.field}>
+            Display scale · {s.uiScale}%
+            <input
+              type="range"
+              min={70}
+              max={200}
+              step={5}
+              value={s.uiScale}
+              onInput={(e) =>
+                updateSettings({ uiScale: Number((e.target as HTMLInputElement).value) })
+              }
+            />
+          </label>
+        </div>
+        <p class={styles.dim}>
+          Text size. Large screens scale up automatically; nudge this if a wall display still
+          looks too small or too big.
+        </p>
+      </section>
+
+      <section class={styles.section}>
+        <h2>Night dimming</h2>
+        <label class={styles.checkItem}>
           <input
-            type="range"
-            min={0}
-            max={100}
-            value={s.cardOpacity}
-            onInput={(e) =>
-              updateSettings({ cardOpacity: Number((e.target as HTMLInputElement).value) })
-            }
+            type="checkbox"
+            checked={s.nightDim}
+            onChange={(e) => updateSettings({ nightDim: (e.target as HTMLInputElement).checked })}
           />
+          Dim the display at night
         </label>
-        <label class={styles.field}>
-          Display scale · {s.uiScale}%
-          <input
-            type="range"
-            min={70}
-            max={200}
-            step={5}
-            value={s.uiScale}
-            onInput={(e) =>
-              updateSettings({ uiScale: Number((e.target as HTMLInputElement).value) })
-            }
-          />
-          <span class={styles.dim}>
-            Text size. Large screens scale up automatically; nudge this if a wall display still
-            looks too small or too big.
-          </span>
-        </label>
+        {s.nightDim && (
+          <>
+            <div class={styles.fieldRow}>
+              <label class={styles.field}>
+                From
+                <input
+                  type="time"
+                  value={s.nightDimStart}
+                  onChange={(e) =>
+                    updateSettings({ nightDimStart: (e.target as HTMLInputElement).value })
+                  }
+                />
+              </label>
+              <label class={styles.field}>
+                Until
+                <input
+                  type="time"
+                  value={s.nightDimEnd}
+                  onChange={(e) =>
+                    updateSettings({ nightDimEnd: (e.target as HTMLInputElement).value })
+                  }
+                />
+              </label>
+              <label class={styles.field}>
+                Dim %
+                <input
+                  type="number"
+                  min={10}
+                  max={90}
+                  value={s.nightDimAmount}
+                  onChange={(e) => {
+                    const n = Math.round(Number((e.target as HTMLInputElement).value));
+                    updateSettings({
+                      nightDimAmount: Number.isFinite(n) ? Math.min(Math.max(n, 10), 90) : 40,
+                    });
+                  }}
+                />
+              </label>
+              <label class={styles.field}>
+                Resume after (min)
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={s.nightDimResume}
+                  onChange={(e) => {
+                    const n = Math.round(Number((e.target as HTMLInputElement).value));
+                    updateSettings({
+                      nightDimResume: Number.isFinite(n) ? Math.min(Math.max(n, 1), 60) : 2,
+                    });
+                  }}
+                />
+              </label>
+            </div>
+            <p class={styles.dim}>
+              Any touch, mouse or keyboard activity lifts the dimming; it returns after the
+              inactivity timeout.
+            </p>
+          </>
+        )}
+      </section>
+
+      <section class={styles.section}>
+        <h2>On-screen elements</h2>
         <label class={styles.checkItem}>
           <input
             type="checkbox"
@@ -150,74 +227,16 @@ export default function SettingsView() {
           />
           Show a banner when a new version is deployed
         </label>
-        <label class={styles.checkItem}>
-          <input
-            type="checkbox"
-            checked={s.nightDim}
-            onChange={(e) => updateSettings({ nightDim: (e.target as HTMLInputElement).checked })}
-          />
-          Dim the display at night
-        </label>
-        {s.nightDim && (
-          <div class={styles.fieldRow}>
-            <label class={styles.field}>
-              From
-              <input
-                type="time"
-                value={s.nightDimStart}
-                onChange={(e) =>
-                  updateSettings({ nightDimStart: (e.target as HTMLInputElement).value })
-                }
-              />
-            </label>
-            <label class={styles.field}>
-              Until
-              <input
-                type="time"
-                value={s.nightDimEnd}
-                onChange={(e) =>
-                  updateSettings({ nightDimEnd: (e.target as HTMLInputElement).value })
-                }
-              />
-            </label>
-            <label class={styles.field}>
-              Dim %
-              <input
-                type="number"
-                min={10}
-                max={90}
-                value={s.nightDimAmount}
-                onChange={(e) => {
-                  const n = Math.round(Number((e.target as HTMLInputElement).value));
-                  updateSettings({
-                    nightDimAmount: Number.isFinite(n) ? Math.min(Math.max(n, 10), 90) : 40,
-                  });
-                }}
-              />
-            </label>
-            <label class={styles.field}>
-              Resume after (min)
-              <input
-                type="number"
-                min={1}
-                max={60}
-                value={s.nightDimResume}
-                onChange={(e) => {
-                  const n = Math.round(Number((e.target as HTMLInputElement).value));
-                  updateSettings({
-                    nightDimResume: Number.isFinite(n) ? Math.min(Math.max(n, 1), 60) : 2,
-                  });
-                }}
-              />
-            </label>
-          </div>
-        )}
-        {s.nightDim && (
-          <p class={styles.dim}>
-            Any touch, mouse or keyboard activity lifts the dimming; it returns after the
-            inactivity timeout.
-          </p>
-        )}
+      </section>
+
+      <p class={styles.groupLabel}>Content</p>
+      <section class={styles.section}>
+        <h2>Pages</h2>
+        <p class={styles.dim}>
+          Add and arrange the pages in the navigation. Edit a page's layout with the ✎ button on
+          the page itself.
+        </p>
+        <PagesEditor />
       </section>
 
       <section class={styles.section}>
@@ -225,6 +244,7 @@ export default function SettingsView() {
         <ProfilesEditor />
       </section>
 
+      <p class={styles.groupLabel}>System</p>
       <section class={styles.section}>
         <h2>Export / Import</h2>
         <ExportImport />

@@ -1,7 +1,25 @@
 .page {
-  max-width: 640px;
-  display: grid;
-  gap: 14px;
+  max-width: 1100px;
+  column-width: 360px;
+  column-gap: 20px;
+}
+
+.pageTitle {
+  column-span: all;
+}
+
+.groupLabel {
+  column-span: all;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin: 22px 0 8px;
+}
+
+.groupLabel:first-of-type {
+  margin-top: 0;
 }
 
 .section {
@@ -11,6 +29,9 @@
   padding: 18px;
   display: grid;
   gap: 12px;
+  margin: 0 0 16px;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
 
 .section h2 {

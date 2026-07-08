@@ -10,14 +10,14 @@
 }
 
 .title {
-  font-size: clamp(0.85rem, 4.2cqi, 2rem);
+  font-size: clamp(0.85rem, calc(4.2cqi * var(--ui-scale, 1)), 2rem);
   font-weight: 650;
   color: var(--text-dim);
 }
 
 .count {
   margin-left: 10px;
-  font-size: clamp(0.66rem, 3.3cqi, 1.5rem);
+  font-size: clamp(0.66rem, calc(3.3cqi * var(--ui-scale, 1)), 1.5rem);
   font-weight: 550;
 }
 

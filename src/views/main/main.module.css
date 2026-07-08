@@ -120,8 +120,11 @@
   height: 100%;
 }
 
+/* stacked days span the full widget width, so use a gentler width factor to
+   avoid oversized text (phones and vertical-layout desktops) */
 .weekGridV .day {
   min-height: 0;
+  font-size: clamp(0.8rem, calc(3.6cqi * var(--ui-scale, 1)), 1.7rem);
 }
 
 /* tappable header for collapsed days on phones */
@@ -141,11 +144,14 @@
   display: grid;
   gap: 6px;
   align-content: space-between;
+  /* agenda list anchors its text to the widget width (times --ui-scale) */
+  container-type: inline-size;
+  font-size: clamp(0.8rem, calc(4.9cqi * var(--ui-scale, 1)), 1.7rem);
 }
 
 .agendaEmpty {
   color: var(--text-dim);
-  font-size: 0.85rem;
+  font-size: 1em;
   padding: 8px 0;
 }
 
@@ -157,6 +163,11 @@
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
+  /* each day column anchors its own text to its width (times the optional
+     --ui-scale slider); children size in em. Floors at 0.8rem so it never
+     gets unreadable, grows on wider/high-res displays. */
+  container-type: inline-size;
+  font-size: clamp(0.8rem, calc(9cqi * var(--ui-scale, 1)), 1.7rem);
 }
 
 .day.today {
@@ -179,11 +190,11 @@
 
 .dayName {
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 1em;
 }
 
 .dayDate {
-  font-size: 0.75rem;
+  font-size: 0.88em;
   color: var(--text-dim);
 }
 
@@ -216,8 +227,8 @@
 
 .eventDot {
   flex: 0 0 auto;
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.59em;
+  height: 0.59em;
   border-radius: 50%;
   margin-top: 5px;
 }
@@ -228,13 +239,13 @@
 }
 
 .eventTime {
-  font-size: 0.68rem;
+  font-size: 0.8em;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
 
 .eventSummary {
-  font-size: 0.8rem;
+  font-size: 0.94em;
   font-weight: 550;
   line-height: 1.3;
   overflow-wrap: anywhere;
