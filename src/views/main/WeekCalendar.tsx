@@ -141,7 +141,9 @@ export function WeekCalendar({ element }: ElementProps) {
   const narrow = useMediaQuery('(max-width: 699px)');
 
   return (
-    <section class={styles.week}>
+    <section
+      class={`${styles.week}${opt.mode === 'agenda' ? ` ${styles.weekAgendaCard}` : ''}`}
+    >
       <header class={styles.weekHeader}>
         <h2 class={`${styles.weekTitle} card-title`}>
           {opt.icon && pageIcons[opt.icon] && (

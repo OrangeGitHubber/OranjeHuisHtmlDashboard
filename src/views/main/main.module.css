@@ -7,6 +7,17 @@
   flex-direction: column;
 }
 
+/* agenda calendars (e.g. Birthdays / Holidays) have no inner day cards, so
+   the widget itself is the card — give it the shared translucent surface so
+   it honors card opacity like the weather/presence widgets */
+.weekAgendaCard {
+  background: var(--surface-card, var(--surface));
+  border: 1px solid var(--border-card, var(--border));
+  border-radius: var(--radius);
+  padding: 0.875rem 1rem;
+  box-shadow: var(--shadow-card, var(--shadow-sm));
+}
+
 .weekHeader {
   display: flex;
   align-items: center;
