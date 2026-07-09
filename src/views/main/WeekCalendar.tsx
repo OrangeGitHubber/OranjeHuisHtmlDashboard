@@ -3,6 +3,7 @@ import { useCalendarEvents, calendarColor } from './useCalendarEvents';
 import { settings } from '../../lib/settings';
 import { pageIcons } from '../../lib/icons';
 import { useMediaQuery } from '../../lib/useMediaQuery';
+import { ClampedList } from '../../components/ClampedList';
 import type { CalendarEvent } from '../../lib/types';
 import type { ElementProps } from '../../grid/elements';
 import styles from './main.module.css';
@@ -221,25 +222,18 @@ function WeekBoard({
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const toggle = (t: number) => setExpandedDay((prev) => (prev === t ? null : t));
 
-  const dayEvents = (day: Day) =>
-    loading && events.length === 0 ? (
-      <>
-        <div class={styles.eventSkeleton} />
-        <div class={styles.eventSkeleton} />
-      </>
-    ) : (
-      day.events.map((ev, i) => (
-        <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>
-          {marker === 'dot' && (
-            <span class={styles.eventDot} style={{ background: calendarColor(ev.calendarId) }} />
-          )}
-          <div class={styles.eventText}>
-            <span class={styles.eventTime}>{timeLabel(ev, day)}</span>
-            <span class={styles.eventSummary}>{ev.summary}</span>
-          </div>
+  const dayEventItems = (day: Day) =>
+    day.events.map((ev, i) => (
+      <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>
+        {marker === 'dot' && (
+          <span class={styles.eventDot} style={{ background: calendarColor(ev.calendarId) }} />
+        )}
+        <div class={styles.eventText}>
+          <span class={styles.eventTime}>{timeLabel(ev, day)}</span>
+          <span class={styles.eventSummary}>{ev.summary}</span>
         </div>
-      ))
-    );
+      </div>
+    ));
 
   return (
     <div class={stacked ? styles.weekStack : styles.weekScroll}>
@@ -251,6 +245,7 @@ function WeekBoard({
           const t = day.start.getTime();
           const collapse = collapsible;
           const open = !collapse || expandedDay === t;
+          const showSkeleton = loading && events.length === 0;
           return (
             <div key={t} class={`${styles.day}${day.isToday ? ` ${styles.today}` : ''}`}>
               <header
@@ -264,7 +259,21 @@ function WeekBoard({
                   {collapse ? (open ? ' ▾' : ' ▸') : ''}
                 </span>
               </header>
-              {open && <div class={styles.dayEvents}>{dayEvents(day)}</div>}
+              {open &&
+                (showSkeleton ? (
+                  <div class={styles.dayEvents}>
+                    <div class={styles.eventSkeleton} />
+                    <div class={styles.eventSkeleton} />
+                  </div>
+                ) : (
+                  <ClampedList
+                    class={styles.dayEvents}
+                    pillClass={styles.morePill}
+                    items={dayEventItems(day)}
+                    moreLabel={(n) => `+${n} more`}
+                    fewerLabel="Show fewer ▲"
+                  />
+                ))}
             </div>
           );
         })}
@@ -286,19 +295,29 @@ function AgendaList({
 }) {
   const now = new Date();
   const upcoming = events.filter((ev) => ev.end > now).slice(0, count);
-  return (
-    <div class={styles.agenda}>
-      {loading && events.length === 0 && (
-        <>
-          <div class={styles.eventSkeleton} />
-          <div class={styles.eventSkeleton} />
-          <div class={styles.eventSkeleton} />
-        </>
-      )}
-      {!loading && upcoming.length === 0 && (
+
+  if (loading && events.length === 0) {
+    return (
+      <div class={styles.agenda}>
+        <div class={styles.eventSkeleton} />
+        <div class={styles.eventSkeleton} />
+        <div class={styles.eventSkeleton} />
+      </div>
+    );
+  }
+  if (upcoming.length === 0) {
+    return (
+      <div class={styles.agenda}>
         <p class={styles.agendaEmpty}>No upcoming entries.</p>
-      )}
-      {upcoming.map((ev, i) => (
+      </div>
+    );
+  }
+
+  return (
+    <ClampedList
+      class={styles.agenda}
+      pillClass={styles.morePill}
+      items={upcoming.map((ev, i) => (
         <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>
           {marker === 'dot' && (
             <span class={styles.eventDot} style={{ background: calendarColor(ev.calendarId) }} />
@@ -309,6 +328,8 @@ function AgendaList({
           </div>
         </div>
       ))}
-    </div>
+      moreLabel={(n) => `+${n} more`}
+      fewerLabel="Show fewer ▲"
+    />
   );
 }

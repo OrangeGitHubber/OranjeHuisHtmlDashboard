@@ -171,6 +171,13 @@
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
+  /* setting overflow here (rather than leaving it visible) also opts this
+     grid item out of CSS Grid's default "grow the row to fit my content"
+     sizing, so a busy day can't stretch the whole 7-column row taller than
+     the widget's own allotted height — every day stays the row's actual
+     height and any overflow is handled inside .dayEvents (see ClampedList
+     in WeekCalendar.tsx) instead of bleeding out here. */
+  overflow: hidden;
   /* query container for the size anchor below (.day > *). A cqi unit can't
      measure the element that declares container-type itself — it silently
      resolves against the next ancestor container instead, which in the
@@ -229,6 +236,40 @@
   padding: 0.5625rem;
   align-content: start;
   flex: 1;
+  /* lets this flex child be clamped to its actual share of .day's height
+     instead of forcing .day to grow to fit every event (ClampedList sets
+     overflow dynamically; this covers the flex-sizing side of the same
+     problem) */
+  min-height: 0;
+  /* .morePill insets itself by this so it lines up with real content
+     instead of sitting flush with the padding edge (which, for an
+     absolutely-positioned child, ignores the parent's own padding) */
+  --pill-inset: 0.5625rem;
+}
+
+/* "+N more" / "Show fewer" pill (ClampedList) — sits at the bottom of a
+   clamped .dayEvents or .agenda list, solid so it fully covers whatever's
+   peeking out from the clipped item behind it. .agenda has no padding of
+   its own (entries deliberately use the full card width), so it falls
+   back to a flush 0 inset instead of --pill-inset. */
+.morePill {
+  position: absolute;
+  left: var(--pill-inset, 0);
+  right: var(--pill-inset, 0);
+  bottom: var(--pill-inset, 0);
+  padding: 0.25rem 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface-card, var(--surface));
+  color: var(--accent);
+  font-size: 0.78em;
+  font-weight: 650;
+  text-align: center;
+  cursor: pointer;
+}
+
+.morePill:hover {
+  background: var(--surface-2-card, var(--surface-2));
 }
 
 .event {
