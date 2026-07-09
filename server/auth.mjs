@@ -1,5 +1,5 @@
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, chmod } from 'node:fs/promises';
 import { join } from 'node:path';
 import { OAuth2Client } from 'google-auth-library';
 import { DATA } from './config-store.mjs';
@@ -10,29 +10,41 @@ const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days, in seconds
 const STATE_MAX_AGE = 5 * 60; // 5 minutes, in seconds
 const SECRET_FILE = join(DATA, 'session-secret');
 
-let secretCache; // string | undefined (undefined = not loaded)
+let secretPromise; // Promise<string> | undefined (undefined = not started)
 
 /**
  * The HMAC secret used to sign session cookies. Uses SESSION_SECRET if set,
  * otherwise generates one on first use and persists it to DATA_DIR so
- * sessions survive restarts. Cached in memory after first read.
+ * sessions survive restarts. Memoizes the in-flight promise (not just the
+ * resolved value) so concurrent first-boot callers all await the same
+ * execution instead of racing to independently generate+write a secret.
+ *
+ * This intentionally mirrors config-store.mjs's DATA-relative persistence
+ * convention (cache + try-read-file + mkdir+writeFile-with-mode-0600), but
+ * uses promise-memoization instead of a plain value cache, specifically
+ * because this function (unlike getConnection()) can generate and write a
+ * new file on a cache miss and must not do that twice concurrently.
  */
-async function getSessionSecret() {
-  if (secretCache !== undefined) return secretCache;
-  if (process.env.SESSION_SECRET) {
-    secretCache = process.env.SESSION_SECRET;
-    return secretCache;
+function getSessionSecret() {
+  if (!secretPromise) {
+    secretPromise = (async () => {
+      if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+      try {
+        const existing = (await readFile(SECRET_FILE, 'utf8')).trim();
+        if (existing) return existing;
+      } catch {
+        /* not generated yet */
+      }
+      const generated = randomBytes(32).toString('hex');
+      await mkdir(DATA, { recursive: true });
+      await writeFile(SECRET_FILE, generated, { mode: 0o600 });
+      // mode on writeFile only applies when the file is newly created; chmod
+      // explicitly so permissions are tightened even if the file pre-existed.
+      await chmod(SECRET_FILE, 0o600);
+      return generated;
+    })();
   }
-  try {
-    secretCache = (await readFile(SECRET_FILE, 'utf8')).trim();
-    if (secretCache) return secretCache;
-  } catch {
-    /* not generated yet */
-  }
-  secretCache = randomBytes(32).toString('hex');
-  await mkdir(DATA, { recursive: true });
-  await writeFile(SECRET_FILE, secretCache, { mode: 0o600 });
-  return secretCache;
+  return secretPromise;
 }
 
 /**
@@ -49,11 +61,16 @@ export function isAuthConfigured() {
   );
 }
 
+let allowedEmailsCache; // string[] | undefined (undefined = not parsed)
+
 function allowedEmails() {
-  return String(process.env.ALLOWED_GOOGLE_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
+  if (allowedEmailsCache === undefined) {
+    allowedEmailsCache = String(process.env.ALLOWED_GOOGLE_EMAILS || '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return allowedEmailsCache;
 }
 
 export function isEmailAllowed(email) {
@@ -86,11 +103,19 @@ export function parseCookies(req) {
   return out;
 }
 
+/** Whether cookies should carry the Secure flag, derived from PUBLIC_URL's
+ * scheme (the same trusted, non-request-derived source redirectUri() uses)
+ * so plain-HTTP deployments (e.g. LAN testing before TLS is fronted) don't
+ * have their Set-Cookie silently dropped by the browser. */
+function cookieSecure() {
+  return String(process.env.PUBLIC_URL || '').toLowerCase().startsWith('https://');
+}
+
 /** Build a Set-Cookie header value. */
 function serializeCookie(name, value, { maxAge, httpOnly = true, path = '/' } = {}) {
   const parts = [`${name}=${encodeURIComponent(value)}`, `Path=${path}`, 'SameSite=Lax'];
   if (httpOnly) parts.push('HttpOnly');
-  parts.push('Secure');
+  if (cookieSecure()) parts.push('Secure');
   if (maxAge !== undefined) parts.push(`Max-Age=${maxAge}`);
   return parts.join('; ');
 }
@@ -188,12 +213,22 @@ function clearStateCookie(res) {
 
 /* ---------- routes ---------- */
 
+const COLORS = {
+  bg: '#151312',
+  surface: '#201d1b',
+  border: '#383330',
+  text: '#f2ede8',
+  textDim: '#a89e95',
+  accent: '#f28c28',
+  accentText: '#1d1206',
+};
+
 const NOT_CONFIGURED_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Not configured</title></head>
-<body style="background:#151312;color:#f2ede8;font-family:system-ui,sans-serif;
+<body style="background:${COLORS.bg};color:${COLORS.text};font-family:system-ui,sans-serif;
 display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
 <div style="text-align:center;max-width:32rem;padding:2rem;">
-<h1 style="color:#f28c28;">Google auth is not configured</h1>
+<h1 style="color:${COLORS.accent};">Google auth is not configured</h1>
 <p>This dashboard requires Google sign-in to be configured before it can be reached.
 Set <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>,
 <code>ALLOWED_GOOGLE_EMAILS</code>, and <code>PUBLIC_URL</code> on the server, then
@@ -208,20 +243,23 @@ function serveNotConfigured(res) {
 const LOGIN_HTML = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Sign in — Oranjehuis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="background:#151312;color:#f2ede8;font-family:system-ui,sans-serif;
+<body style="background:${COLORS.bg};color:${COLORS.text};font-family:system-ui,sans-serif;
 display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
-<div style="background:#201d1b;border:1px solid #383330;border-radius:12px;
+<div style="background:${COLORS.surface};border:1px solid ${COLORS.border};border-radius:12px;
 padding:2.5rem 3rem;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.4);
 max-width:22rem;">
 <h1 style="margin:0 0 0.5rem;font-size:1.4rem;">Oranjehuis</h1>
-<p style="margin:0 0 1.75rem;color:#a89e95;font-size:0.95rem;">
+<p style="margin:0 0 1.75rem;color:${COLORS.textDim};font-size:0.95rem;">
 Sign in to view the dashboard.</p>
-<a href="/auth/google" style="display:inline-block;background:#f28c28;color:#1d1206;
+<a href="/auth/google" style="display:inline-block;background:${COLORS.accent};color:${COLORS.accentText};
 text-decoration:none;font-weight:600;padding:0.7rem 1.5rem;border-radius:8px;
 font-size:0.95rem;">Continue with Google</a>
 </div></body></html>`;
 
-/** GET /login — unauthenticated, self-contained HTML page. */
+/** GET /login — unauthenticated, self-contained HTML page. Also serves the
+ * "not configured" page when auth isn't set up (the router's central
+ * isAuthConfigured() gate routes here in that case, rather than this
+ * checking it independently). */
 export function handleLogin(req, res) {
   if (!isAuthConfigured()) {
     serveNotConfigured(res);
@@ -231,12 +269,9 @@ export function handleLogin(req, res) {
   res.end(LOGIN_HTML);
 }
 
-/** GET /auth/google — redirect to Google's OAuth consent screen. */
+/** GET /auth/google — redirect to Google's OAuth consent screen. Assumes the
+ * router's central isAuthConfigured() gate has already run. */
 export function handleAuthGoogle(req, res) {
-  if (!isAuthConfigured()) {
-    serveNotConfigured(res);
-    return;
-  }
   const state = randomBytes(16).toString('hex');
   setStateCookie(res, state);
 
@@ -252,12 +287,9 @@ export function handleAuthGoogle(req, res) {
   res.end();
 }
 
-/** GET /auth/google/callback — exchange code, verify id_token, check allow-list. */
+/** GET /auth/google/callback — exchange code, verify id_token, check allow-list.
+ * Assumes the router's central isAuthConfigured() gate has already run. */
 export async function handleAuthGoogleCallback(req, res) {
-  if (!isAuthConfigured()) {
-    serveNotConfigured(res);
-    return;
-  }
   const url = new URL(req.url, 'http://internal');
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
@@ -324,8 +356,20 @@ export async function handleAuthGoogleCallback(req, res) {
   res.end();
 }
 
-/** GET /auth/logout — clear the session cookie and redirect to /login. */
+/** GET /auth/logout — clear the session cookie and redirect to /login.
+ * SameSite=Lax cookies are still sent on cross-site top-level GET
+ * navigations, so a malicious page could force-navigate a signed-in victim
+ * here to silently clear their session. Sec-Fetch-Site is sent by all modern
+ * browsers on every navigation; refuse only when it explicitly says
+ * cross-site. Direct address-bar/manual navigation (the documented sign-out
+ * flow) sends 'none', a same-app link sends 'same-origin', and older
+ * browsers that send no Sec-Fetch-Site at all are let through unchanged so
+ * this doesn't regress for them. */
 export function handleAuthLogout(req, res) {
+  if (req.headers['sec-fetch-site'] === 'cross-site') {
+    res.writeHead(400, { 'Content-Type': 'text/plain' }).end('Refused.');
+    return;
+  }
   clearSessionCookie(res);
   res.writeHead(302, { Location: '/login' });
   res.end();

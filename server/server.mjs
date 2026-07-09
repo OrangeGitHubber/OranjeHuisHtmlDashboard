@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { serveStatic } from './static.mjs';
+import { serveStatic, isKnownAssetExtension } from './static.mjs';
 import { handleConfig } from './api.mjs';
 import { handleVersion } from './version.mjs';
 import { proxyRest, attachWsProxy } from './ha-proxy.mjs';
@@ -23,7 +23,7 @@ function looksLikeApiOrAsset(path) {
     path.startsWith('/config/') ||
     path.startsWith('/ha/') ||
     path === '/version' ||
-    /\.[a-z0-9]+$/i.test(path)
+    isKnownAssetExtension(path)
   );
 }
 
@@ -31,17 +31,17 @@ const server = createServer((req, res) => {
   const path = (req.url || '/').split('?')[0];
 
   const handled = (async () => {
-    // /login itself must also fail closed when auth isn't configured, so it
-    // is handled inside handleLogin/handleAuthGoogle*/handleAuthLogout rather
-    // than bypassing the isAuthConfigured() check below.
+    // Single central fail-closed gate: every route below (including /login
+    // and the other auth routes) assumes this has already run, so their own
+    // per-handler isAuthConfigured() checks were removed as redundant.
+    if (!isAuthConfigured()) return handleLogin(req, res); // serves the "not configured" page
+
     if (AUTH_PATHS.has(path)) {
       if (path === '/login') return handleLogin(req, res);
       if (path === '/auth/google') return handleAuthGoogle(req, res);
       if (path === '/auth/google/callback') return handleAuthGoogleCallback(req, res);
       if (path === '/auth/logout') return handleAuthLogout(req, res);
     }
-
-    if (!isAuthConfigured()) return handleLogin(req, res); // serves the "not configured" page
 
     if (!(await isAuthed(req))) {
       if (looksLikeApiOrAsset(path)) {

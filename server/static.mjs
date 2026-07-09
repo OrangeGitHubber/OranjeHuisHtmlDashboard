@@ -23,6 +23,13 @@ const MIME = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
+/** Whether a path ends in a known static-asset extension (the same set
+ * MIME serves), single-sourcing "what counts as an asset" for callers
+ * outside this module (e.g. server.mjs's unauthenticated-request routing). */
+export function isKnownAssetExtension(path) {
+  return Object.prototype.hasOwnProperty.call(MIME, extname(path).toLowerCase());
+}
+
 /** Serve the built SPA with an index.html fallback (client-side routing). */
 export async function serveStatic(req, res) {
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);

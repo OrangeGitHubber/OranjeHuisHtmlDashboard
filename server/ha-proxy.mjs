@@ -90,9 +90,13 @@ export function attachWsProxy(server) {
       socket.destroy();
       return;
     }
+    // isAuthed() below is async; without a listener here, the socket erroring
+    // (e.g. the client resets the connection) during that gap would be an
+    // unhandled 'error' event — fatal to the whole process by Node's default.
+    socket.on('error', () => socket.destroy());
     isAuthed(req)
       .then((authed) => {
-        if (!authed) {
+        if (!authed || socket.destroyed) {
           socket.destroy();
           return;
         }
