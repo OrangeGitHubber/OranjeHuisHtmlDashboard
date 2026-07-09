@@ -124,6 +124,16 @@ video {
 @media (min-width: 768px) {
   .shell {
     flex-direction: row;
+    /* on mobile, min-height:100dvh (above) makes the page fill the screen
+       above the bottom nav bar — on wide screens it also forced the
+       sidebar (which stretches to match .shell's own height, flexbox
+       default) to always be full-viewport tall, regardless of how much
+       shorter the actual page content was. Sizing to content instead
+       makes the sidebar match "as far down as the lowest widget goes",
+       floored by its own natural height (still enough to fit every page
+       button plus refresh/settings, since a stretched flex item never
+       shrinks below its own min-content size). */
+    min-height: 0;
   }
 
   .nav {
@@ -134,7 +144,6 @@ video {
     justify-content: flex-start;
     gap: 6px;
     width: var(--nav-width, 92px);
-    height: 100dvh;
     padding: 14px 10px;
     border-top: none;
     border-right: 1px solid var(--border);
