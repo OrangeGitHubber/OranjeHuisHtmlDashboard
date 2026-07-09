@@ -182,9 +182,13 @@
 /* the size anchor: cqi off this day column's own rendered width (times the
    optional --ui-scale slider), applied to every direct child (header,
    events list) so everything below sizes in em from it. Floors at 0.8rem so
-   it never gets unreadable, grows on wider/high-res displays. */
+   it never gets unreadable, grows on wider/high-res displays. Ratio matches
+   people.module.css's .card (6.6cqi) since day columns and person cards are
+   structurally the same shape — a grid of same-width cards — and should
+   read at the same relative size instead of each widget inventing its own
+   ratio. */
 .day > * {
-  font-size: clamp(0.8rem, calc(9cqi * var(--ui-scale, 1)), 1.7rem);
+  font-size: clamp(0.8rem, calc(6.6cqi * var(--ui-scale, 1)), 1.7rem);
 }
 
 .day.today {
