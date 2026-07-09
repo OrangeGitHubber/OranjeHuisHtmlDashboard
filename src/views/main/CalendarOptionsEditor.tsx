@@ -185,6 +185,27 @@ export default function CalendarOptionsEditor({
                 entries use the full space.
               </span>
             </div>
+            <div class={opt.row}>
+              Entry spacing
+              <div class={opt.seg}>
+                <button
+                  class={`${opt.segBtn}${!o.agendaFill ? ` ${opt.segActive}` : ''}`}
+                  onClick={() => set({ agendaFill: false })}
+                >
+                  Compact
+                </button>
+                <button
+                  class={`${opt.segBtn}${o.agendaFill ? ` ${opt.segActive}` : ''}`}
+                  onClick={() => set({ agendaFill: true })}
+                >
+                  Fill height
+                </button>
+              </div>
+              <span class={opt.dim}>
+                “Compact” keeps entries close together; “Fill height” spreads them out to use the
+                whole card, which can look gappy on a tall widget with few entries.
+              </span>
+            </div>
           </>
         )}
 

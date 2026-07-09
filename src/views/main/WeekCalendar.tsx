@@ -37,6 +37,11 @@ export interface CalendarOptions {
   /** agenda mode: draw a surrounding card surface (uses card opacity).
       Off by default so the entries use the full space. */
   agendaCard?: boolean;
+  /** agenda mode: stretch entries to fill the card height with even gaps
+      between them. Off by default (entries cluster together with a
+      consistent gap) — "fill" looks stretched/gappy on a tall widget with
+      few entries, but some may still prefer it for short lists. */
+  agendaFill?: boolean;
 }
 
 export type EntryMarker = 'hide' | 'dot' | 'bar';
@@ -62,6 +67,7 @@ export function calendarOptionsOf(element: ElementProps['element']): Required<Ca
     // marker wins; else derive from the legacy showDots flag
     marker: (o.marker ?? (o.showDots === false ? 'hide' : 'dot')) as EntryMarker,
     agendaCard: o.agendaCard === true,
+    agendaFill: o.agendaFill === true,
   };
 }
 
@@ -176,7 +182,13 @@ export function WeekCalendar({ element }: ElementProps) {
           <button onClick={refresh}>Retry</button>
         </div>
       ) : opt.mode === 'agenda' ? (
-        <AgendaList events={events} count={opt.count} loading={loading} marker={opt.marker} />
+        <AgendaList
+          events={events}
+          count={opt.count}
+          loading={loading}
+          marker={opt.marker}
+          fill={opt.agendaFill}
+        />
       ) : (
         <WeekBoard
           events={events}
@@ -302,18 +314,21 @@ function AgendaList({
   count,
   loading,
   marker,
+  fill,
 }: {
   events: CalendarEvent[];
   count: number;
   loading: boolean;
   marker: EntryMarker;
+  fill: boolean;
 }) {
   const now = new Date();
   const upcoming = events.filter((ev) => ev.end > now).slice(0, count);
+  const agendaClass = `${styles.agenda}${fill ? ` ${styles.agendaFill}` : ''}`;
 
   if (loading && events.length === 0) {
     return (
-      <div class={styles.agenda}>
+      <div class={agendaClass}>
         <div class={styles.eventSkeleton} />
         <div class={styles.eventSkeleton} />
         <div class={styles.eventSkeleton} />
@@ -322,7 +337,7 @@ function AgendaList({
   }
   if (upcoming.length === 0) {
     return (
-      <div class={styles.agenda}>
+      <div class={agendaClass}>
         <p class={styles.agendaEmpty}>No upcoming entries.</p>
       </div>
     );
@@ -330,7 +345,7 @@ function AgendaList({
 
   return (
     <ClampedList
-      class={styles.agenda}
+      class={agendaClass}
       pillClass={styles.morePill}
       items={upcoming.map((ev, i) => (
         <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>

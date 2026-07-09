@@ -140,15 +140,27 @@
   background: var(--surface-2-card, var(--surface-2));
 }
 
-/* agenda (next N entries) layout — entries spread to fill the card height */
+/* agenda (next N entries) layout — entries cluster together with a
+   consistent gap by default (any leftover height on a tall/sparse widget
+   just sits empty below the list, rather than being stretched into gaps
+   between entries — see .agendaFill for the opt-in alternative) */
 .agenda {
   flex: 1;
   min-height: 0;
   display: grid;
-  gap: 6px;
-  align-content: space-between;
+  gap: 12px;
+  align-content: start;
   /* query container for the size anchor below (.agenda > *) */
   container-type: inline-size;
+}
+
+/* opt-in: stretch entries to fill the card height with even gaps between
+   them instead of clustering together. Looks stretched/gappy on a tall
+   widget with few entries, which is why it isn't the default — but some
+   may still prefer it for short lists that don't hit that mismatch. */
+.agendaFill {
+  gap: 6px;
+  align-content: space-between;
 }
 
 /* the size anchor: cqi off the agenda list's own rendered width (times the
