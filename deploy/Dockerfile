@@ -3,9 +3,8 @@
 # 1. Build the SPA
 FROM node:22-alpine AS build
 WORKDIR /app
-# no package-lock.json is committed yet; switch to `npm ci` once one exists
 COPY package*.json ./
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
@@ -14,7 +13,7 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY server/package*.json ./server/
-RUN cd server && npm install --omit=dev --no-audit --no-fund
+RUN cd server && npm ci --omit=dev --no-audit --no-fund
 COPY server ./server
 COPY --from=build /app/dist ./dist
 EXPOSE 80
