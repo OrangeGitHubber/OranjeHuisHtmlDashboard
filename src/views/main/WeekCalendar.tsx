@@ -235,12 +235,27 @@ function WeekBoard({
       </div>
     ));
 
+  // stacked + collapsible (phones): row height must follow each day's own
+  // content instead of the CSS default (grid-auto-rows: 1fr, all rows
+  // equal) — an accordion needs UNEQUAL rows by definition, otherwise a
+  // collapsed day still stretches to match the open one's row height and
+  // renders as an empty box instead of a compact header. Collapsed days get
+  // 'auto' (shrink to just their header); the one open day gets '1fr' (fill
+  // whatever's left), which also gives its ClampedList a real bounded
+  // height to clamp/paginate against instead of growing unbounded.
+  const gridStyle = stacked
+    ? collapsible
+      ? {
+          gridTemplateRows: board
+            .map((day) => (day.start.getTime() === expandedDay ? '1fr' : 'auto'))
+            .join(' '),
+        }
+      : undefined
+    : { gridTemplateColumns: `repeat(${days}, minmax(158px, 1fr))` };
+
   return (
     <div class={stacked ? styles.weekStack : styles.weekScroll}>
-      <div
-        class={stacked ? styles.weekGridV : styles.weekGrid}
-        style={stacked ? undefined : { gridTemplateColumns: `repeat(${days}, minmax(158px, 1fr))` }}
-      >
+      <div class={stacked ? styles.weekGridV : styles.weekGrid} style={gridStyle}>
         {board.map((day) => {
           const t = day.start.getTime();
           const collapse = collapsible;
