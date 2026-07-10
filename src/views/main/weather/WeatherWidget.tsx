@@ -24,9 +24,17 @@ const SUPPORTS_HOURLY = 2;
  */
 export type WeatherBucket = 'xs' | 'sm' | 'md' | 'lg';
 
+// thresholds verified with a live harness against real content (see git log)
+// — the first pass (480/230) was a from-hand estimate that turned out far
+// too conservative: a 6-grid-row-tall card (228px) was landing in xs and
+// permanently dropping the hourly row, when the actual minimum height for
+// it to fit at sm's font is ~180px. Width was similarly overestimated —
+// hourly/daily rows redistribute across whatever width they get (no
+// wrapping) rather than needing a wide box, so the true constraint is just
+// .current's icon+temp+details row wrapping to two lines below ~280px.
 export function weatherBucket(width: number, height: number): WeatherBucket {
-  const widthRank = width < 480 ? 0 : width < 720 ? 1 : width < 960 ? 2 : 3;
-  const heightRank = height < 230 ? 0 : height < 320 ? 1 : height < 420 ? 2 : 3;
+  const widthRank = width < 320 ? 0 : width < 720 ? 1 : width < 960 ? 2 : 3;
+  const heightRank = height < 185 ? 0 : height < 320 ? 1 : height < 420 ? 2 : 3;
   const rank = Math.min(widthRank, heightRank);
   return (['xs', 'sm', 'md', 'lg'] as const)[rank];
 }
