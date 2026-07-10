@@ -5,7 +5,13 @@
   padding: 1em;
   display: grid;
   gap: 0.875em;
-  align-content: start;
+  /* space-evenly rather than start: a bucket's font is fixed once picked,
+     but the box it's placed in can still be much taller than that bucket's
+     own calibrated worst-case (e.g. width pins the bucket while height has
+     slack left over) — space-evenly spreads that leftover room between the
+     four sections instead of leaving it all as one dead gap below the last
+     one, which is what "start" did. */
+  align-content: space-evenly;
   height: 100%;
 }
 
