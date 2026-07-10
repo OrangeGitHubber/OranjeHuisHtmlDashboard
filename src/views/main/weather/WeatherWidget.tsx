@@ -39,6 +39,24 @@ export function weatherBucket(width: number, height: number): WeatherBucket {
   return (['xs', 'sm', 'md', 'lg'] as const)[rank];
 }
 
+/** the largest px value that still fits each bucket's own worst-case
+    (smallest) size, verified with a live harness — see weatherBucket()'s
+    thresholds above. User-configurable (element.options.fontSizes) since
+    a specific placement is often much roomier than a bucket's worst case
+    (e.g. a wide-and-tall card still only counts as 'md' because width is
+    the tighter axis) — bumping these defaults directly would just move
+    the clipping problem to whoever's card IS at the worst case. */
+export const DEFAULT_WEATHER_FONT_SIZES: Record<WeatherBucket, number> = {
+  xs: 12,
+  sm: 11,
+  md: 15,
+  lg: 20,
+};
+
+function sanitizeFontSize(v: unknown, fallback: number): number {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.min(Math.max(Math.round(v), 6), 72) : fallback;
+}
+
 function fmt(n: number | undefined, digits = 0): string {
   return n === undefined || n === null || isNaN(n) ? '–' : n.toFixed(digits);
 }
@@ -81,14 +99,25 @@ export default function WeatherWidget({ element }: ElementProps) {
   );
   const { ref, size } = useElementSize<HTMLDivElement>();
   const bucket = weatherBucket(size.width, size.height);
+
+  const rawFontSizes = element.options?.fontSizes as Partial<Record<WeatherBucket, number>> | undefined;
+  const fontPx = sanitizeFontSize(
+    rawFontSizes && typeof rawFontSizes === 'object' ? rawFontSizes[bucket] : undefined,
+    DEFAULT_WEATHER_FONT_SIZES[bucket],
+  );
+  const cardStyle = { fontSize: `calc(${fontPx}px * var(--ui-scale, 1))` };
+
   // xs is tight enough that even the smallest readable text can't fit all
   // three sections (see the calibration notes in weather.module.css) — drop
-  // the hourly row rather than clip it mid-row
-  const showHourly = bucket !== 'xs';
+  // the hourly row rather than clip it mid-row. User-configurable in case a
+  // custom (larger) xs font size actually does have room for it.
+  const rawDropHourly = element.options?.dropHourlyAtXs;
+  const dropHourlyAtXs = typeof rawDropHourly === 'boolean' ? rawDropHourly : true;
+  const showHourly = bucket !== 'xs' || !dropHourlyAtXs;
 
   if (!entityId) {
     return (
-      <div class={styles.card} ref={ref} data-bucket={bucket}>
+      <div class={styles.card} ref={ref} data-bucket={bucket} style={cardStyle}>
         <h2 class={`${styles.title} card-title`}>Weather</h2>
         <div class={styles.hint}>
           <p>No weather entity selected — tap this card in page edit mode to pick one.</p>
@@ -99,7 +128,7 @@ export default function WeatherWidget({ element }: ElementProps) {
 
   if (!entity) {
     return (
-      <div class={styles.card} ref={ref} data-bucket={bucket}>
+      <div class={styles.card} ref={ref} data-bucket={bucket} style={cardStyle}>
         <h2 class={`${styles.title} card-title`}>Weather</h2>
         <p class={styles.hintText}>
           Entity <code>{entityId}</code> was not found in Home Assistant.
@@ -113,7 +142,7 @@ export default function WeatherWidget({ element }: ElementProps) {
   const windUnit = (a.wind_speed_unit as string | undefined) ?? '';
 
   return (
-    <div class={styles.card} ref={ref} data-bucket={bucket}>
+    <div class={styles.card} ref={ref} data-bucket={bucket} style={cardStyle}>
       <h2 class={`${styles.title} card-title`}>Weather</h2>
 
       <div class={styles.current}>

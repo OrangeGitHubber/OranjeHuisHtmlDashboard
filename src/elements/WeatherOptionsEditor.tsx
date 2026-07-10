@@ -3,10 +3,18 @@ import { updateElementOptions, removeElement } from '../lib/settings';
 import { useEntitiesByDomain } from '../lib/ha/entities';
 import { friendlyName } from '../views/settings/EntitySelect';
 import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
+import { DEFAULT_WEATHER_FONT_SIZES } from '../views/main/weather/WeatherWidget';
+import type { WeatherBucket } from '../views/main/weather/WeatherWidget';
 import type { EditorProps } from './domainOptionsEditor';
 import opt from '../components/options.module.css';
 
 const DAY_CHOICES = [3, 4, 5, 6, 7];
+const BUCKETS: { key: WeatherBucket; label: string }[] = [
+  { key: 'xs', label: 'Smallest' },
+  { key: 'sm', label: 'Small' },
+  { key: 'md', label: 'Medium' },
+  { key: 'lg', label: 'Large' },
+];
 
 export default function WeatherOptionsEditor({ pageId, element, onClose }: EditorProps) {
   const entities = useEntitiesByDomain('weather').value;
@@ -14,6 +22,10 @@ export default function WeatherOptionsEditor({ pageId, element, onClose }: Edito
   const current = typeof rawId === 'string' ? rawId : '';
   const rawDays = element.options?.forecastDays;
   const days = typeof rawDays === 'number' ? rawDays : 5;
+  const rawFontSizes = element.options?.fontSizes as Partial<Record<WeatherBucket, number>> | undefined;
+  const fontSizes = { ...DEFAULT_WEATHER_FONT_SIZES, ...(rawFontSizes ?? {}) };
+  const rawDropHourly = element.options?.dropHourlyAtXs;
+  const dropHourlyAtXs = typeof rawDropHourly === 'boolean' ? rawDropHourly : true;
   const set = (patch: Record<string, unknown>) =>
     updateElementOptions(pageId, element.id, patch);
 
@@ -55,6 +67,68 @@ export default function WeatherOptionsEditor({ pageId, element, onClose }: Edito
                 {d}
               </button>
             ))}
+          </div>
+        </div>
+        <div class={opt.row}>
+          Text size by widget size (px)
+          <div class={opt.seg}>
+            {BUCKETS.map(({ key, label }) => (
+              <label
+                key={key}
+                title={label}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+              >
+                <span style={{ fontSize: '0.68rem', textTransform: 'uppercase' }}>{key}</span>
+                <input
+                  type="number"
+                  class={opt.num}
+                  style={{ width: 56 }}
+                  min={6}
+                  max={72}
+                  value={fontSizes[key]}
+                  onChange={(e) => {
+                    const v = Number((e.target as HTMLInputElement).value);
+                    set({
+                      fontSizes: {
+                        ...fontSizes,
+                        [key]: Number.isFinite(v) ? v : DEFAULT_WEATHER_FONT_SIZES[key],
+                      },
+                    });
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+          {JSON.stringify(fontSizes) !== JSON.stringify(DEFAULT_WEATHER_FONT_SIZES) && (
+            <button
+              class={opt.segBtn}
+              style={{ justifySelf: 'start' }}
+              onClick={() => set({ fontSizes: undefined })}
+            >
+              Reset to defaults
+            </button>
+          )}
+          <span class={opt.dim}>
+            Widget picks one of these four sizes based on its current width/height — a size much
+            bigger than what its bucket was tuned for can overflow if the widget is ever resized
+            smaller.
+          </span>
+        </div>
+        <div class={opt.row}>
+          Hourly forecast at smallest size
+          <div class={opt.seg}>
+            <button
+              class={`${opt.segBtn}${dropHourlyAtXs ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ dropHourlyAtXs: true })}
+            >
+              Hide
+            </button>
+            <button
+              class={`${opt.segBtn}${!dropHourlyAtXs ? ` ${opt.segActive}` : ''}`}
+              onClick={() => set({ dropHourlyAtXs: false })}
+            >
+              Always show
+            </button>
           </div>
         </div>
         <CardTitleRow pageId={pageId} element={element} />
