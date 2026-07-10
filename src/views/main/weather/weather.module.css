@@ -15,7 +15,7 @@
      but wide tile, width alone would happily grow the font past what the
      tile's actual height can fit, pushing the hourly row (or more) out
      of view instead of clipping cleanly. Whichever axis is tighter wins. */
-  font-size: clamp(1rem, calc(min(3.2cqi, 6.2cqb) * var(--ui-scale, 1)), 2.2rem);
+  font-size: clamp(1rem, calc(min(3.2cqi, 5.4cqb) * var(--ui-scale, 1)), 2.2rem);
 }
 
 .title {
