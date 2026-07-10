@@ -4,6 +4,7 @@ import { settings } from '../../lib/settings';
 import { pageIcons } from '../../lib/icons';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import { useElementSize } from '../../lib/useElementSize';
+import { sanitizeFontSize } from '../../lib/fontSizePresets';
 import { ClampedList } from '../../components/ClampedList';
 import type { CalendarEvent } from '../../lib/types';
 import type { ElementProps } from '../../grid/elements';
@@ -28,6 +29,26 @@ export function dayBucket(width: number): DayBucket {
   if (width < 360) return 'md';
   return 'lg';
 }
+
+/** verified with a live harness at each bucket's own worst-case width (a
+    159px day column with the longest weekday name, "Wednesday") — user-
+    configurable via element.options.dayFontSizes, same reasoning as
+    weather's DEFAULT_WEATHER_FONT_SIZES. */
+export const DEFAULT_DAY_FONT_SIZES: Record<DayBucket, number> = {
+  xs: 15,
+  sm: 19,
+  md: 24,
+  lg: 30,
+};
+/** smaller than DEFAULT_DAY_FONT_SIZES at the same bucket name — an agenda
+    entry is a single wide row, not a narrow stacked column, so it can
+    afford more text per em without wrapping as aggressively. */
+export const DEFAULT_AGENDA_FONT_SIZES: Record<DayBucket, number> = {
+  xs: 14,
+  sm: 17,
+  md: 19,
+  lg: 23,
+};
 
 /**
  * Calendar element. Each placed instance has its own options
@@ -63,11 +84,20 @@ export interface CalendarOptions {
       consistent gap) — "fill" looks stretched/gappy on a tall widget with
       few entries, but some may still prefer it for short lists. */
   agendaFill?: boolean;
+  /** per-bucket px override for day-board columns (week mode) */
+  dayFontSizes?: Partial<Record<DayBucket, number>>;
+  /** per-bucket px override for agenda entries (agenda mode) */
+  agendaFontSizes?: Partial<Record<DayBucket, number>>;
 }
 
 export type EntryMarker = 'hide' | 'dot' | 'bar';
 
-export function calendarOptionsOf(element: ElementProps['element']): Required<CalendarOptions> {
+// dayFontSizes/agendaFontSizes are read separately (as partial per-bucket
+// overrides merged over their own DEFAULT_* maps in WeekCalendar), not
+// resolved to a single value here like the rest of these options
+export function calendarOptionsOf(
+  element: ElementProps['element'],
+): Required<Omit<CalendarOptions, 'dayFontSizes' | 'agendaFontSizes'>> {
   const o = (element.options ?? {}) as CalendarOptions;
   const mode = o.mode === 'agenda' ? 'agenda' : 'week';
   return {
@@ -164,6 +194,9 @@ function agoLabel(lastFetched: number): string {
 
 export function WeekCalendar({ element }: ElementProps) {
   const opt = calendarOptionsOf(element);
+  const rawOptions = (element.options ?? {}) as CalendarOptions;
+  const dayFontSizes = { ...DEFAULT_DAY_FONT_SIZES, ...(rawOptions.dayFontSizes ?? {}) };
+  const agendaFontSizes = { ...DEFAULT_AGENDA_FONT_SIZES, ...(rawOptions.agendaFontSizes ?? {}) };
   const windowDays = opt.mode === 'agenda' ? AGENDA_WINDOW_DAYS : opt.days;
   const { events, loading, error, lastFetched, refresh } = useCalendarEvents(
     windowDays,
@@ -209,6 +242,7 @@ export function WeekCalendar({ element }: ElementProps) {
           loading={loading}
           marker={opt.marker}
           fill={opt.agendaFill}
+          fontSizes={agendaFontSizes}
         />
       ) : (
         <WeekBoard
@@ -218,6 +252,7 @@ export function WeekCalendar({ element }: ElementProps) {
           loading={loading}
           marker={opt.marker}
           narrow={narrow}
+          fontSizes={dayFontSizes}
         />
       )}
     </section>
@@ -241,6 +276,7 @@ function WeekBoard({
   loading,
   marker,
   narrow,
+  fontSizes,
 }: {
   events: CalendarEvent[];
   days: number;
@@ -248,6 +284,7 @@ function WeekBoard({
   loading: boolean;
   marker: EntryMarker;
   narrow: boolean;
+  fontSizes: Record<DayBucket, number>;
 }) {
   const board = buildDays(events, days);
   const stacked = vertical || narrow;
@@ -266,6 +303,8 @@ function WeekBoard({
       ? (gridSize.width - GRID_GAP * (days - 1)) / days
       : gridSize.width;
   const bucket = dayBucket(perDayWidth);
+  const fontPx = sanitizeFontSize(fontSizes[bucket], DEFAULT_DAY_FONT_SIZES[bucket]);
+  const dayStyle = { fontSize: `calc(${fontPx}px * var(--ui-scale, 1))` };
 
   const dayEventItems = (day: Day) =>
     day.events.map((ev, i) => (
@@ -315,6 +354,7 @@ function WeekBoard({
               key={t}
               class={`${styles.day}${day.isToday ? ` ${styles.today}` : ''}`}
               data-bucket={bucket}
+              style={dayStyle}
             >
               <header
                 class={`${styles.dayHeader}${collapse ? ` ${styles.dayHeaderTap}` : ''}`}
@@ -356,22 +396,26 @@ function AgendaList({
   loading,
   marker,
   fill,
+  fontSizes,
 }: {
   events: CalendarEvent[];
   count: number;
   loading: boolean;
   marker: EntryMarker;
   fill: boolean;
+  fontSizes: Record<DayBucket, number>;
 }) {
   const now = new Date();
   const upcoming = events.filter((ev) => ev.end > now).slice(0, count);
   const agendaClass = `${styles.agenda}${fill ? ` ${styles.agendaFill}` : ''}`;
   const [width, setWidth] = useState(0);
   const bucket = dayBucket(width);
+  const fontPx = sanitizeFontSize(fontSizes[bucket], DEFAULT_AGENDA_FONT_SIZES[bucket]);
+  const agendaStyle = { fontSize: `calc(${fontPx}px * var(--ui-scale, 1))` };
 
   if (loading && events.length === 0) {
     return (
-      <div class={agendaClass} data-bucket={bucket}>
+      <div class={agendaClass} data-bucket={bucket} style={agendaStyle}>
         <div class={styles.eventSkeleton} />
         <div class={styles.eventSkeleton} />
         <div class={styles.eventSkeleton} />
@@ -380,7 +424,7 @@ function AgendaList({
   }
   if (upcoming.length === 0) {
     return (
-      <div class={agendaClass} data-bucket={bucket}>
+      <div class={agendaClass} data-bucket={bucket} style={agendaStyle}>
         <p class={styles.agendaEmpty}>No upcoming entries.</p>
       </div>
     );
@@ -391,6 +435,7 @@ function AgendaList({
       class={agendaClass}
       pillClass={styles.morePill}
       bucket={bucket}
+      style={agendaStyle}
       onResize={(w) => setWidth(w)}
       items={upcoming.map((ev, i) => (
         <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>

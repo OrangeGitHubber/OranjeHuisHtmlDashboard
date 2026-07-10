@@ -11,42 +11,18 @@
 
 /* Discrete size presets (see presenceBucket() in PresenceWidget.tsx)
    instead of a continuous cqi formula — same width-only-ignores-height
-   issue as weather had, applied here for consistency even though this
-   header is a much lower-risk single line of text. */
+   issue as weather had. Per-bucket px value (DEFAULT_PRESENCE_*_FONT_SIZES,
+   user-overridable via element.options) is applied as an inline style in
+   PresenceWidget.tsx rather than here, matching WeatherWidget — data-bucket
+   stays on the card purely for devtools inspection. */
 .title {
   font-weight: 650;
   color: var(--text-dim);
 }
 
-.card[data-bucket='xs'] .title {
-  font-size: calc(12px * var(--ui-scale, 1));
-}
-.card[data-bucket='sm'] .title {
-  font-size: calc(15px * var(--ui-scale, 1));
-}
-.card[data-bucket='md'] .title {
-  font-size: calc(19px * var(--ui-scale, 1));
-}
-.card[data-bucket='lg'] .title {
-  font-size: calc(24px * var(--ui-scale, 1));
-}
-
 .count {
   margin-left: 10px;
   font-weight: 550;
-}
-
-.card[data-bucket='xs'] .count {
-  font-size: calc(10px * var(--ui-scale, 1));
-}
-.card[data-bucket='sm'] .count {
-  font-size: calc(12px * var(--ui-scale, 1));
-}
-.card[data-bucket='md'] .count {
-  font-size: calc(15px * var(--ui-scale, 1));
-}
-.card[data-bucket='lg'] .count {
-  font-size: calc(19px * var(--ui-scale, 1));
 }
 
 /* both layouts fill the remaining widget height and stretch cards to fit,

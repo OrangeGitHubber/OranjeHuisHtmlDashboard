@@ -21,6 +21,7 @@ export function ClampedList({
   pillClass,
   bucket,
   onResize,
+  style,
 }: {
   /** one element per item, in render order (each needs its own `key`) */
   items: JSX.Element[];
@@ -38,6 +39,11 @@ export function ClampedList({
       item-fit ResizeObserver below since that one skips measuring while
       expanded, but width (what bucketing needs) doesn't change with it */
   onResize?: (width: number, height: number) => void;
+  /** merged with the component's own position/overflow styles — this
+      component owns the only ref on its root, so a caller that needs to
+      style it directly (e.g. a user-configurable font-size) has no other
+      way to reach it */
+  style?: JSX.CSSProperties;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(items.length);
@@ -119,7 +125,7 @@ export function ClampedList({
       ref={ref}
       class={className}
       data-bucket={bucket}
-      style={{ position: 'relative', overflowY: expanded ? 'auto' : 'hidden' }}
+      style={{ ...style, position: 'relative', overflowY: expanded ? 'auto' : 'hidden' }}
     >
       {items}
       {!expanded && hidden > 0 && (

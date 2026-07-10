@@ -3,6 +3,7 @@ import { settings } from '../../../lib/settings';
 import { useForecast } from './useForecast';
 import { conditionIcon, conditionLabel } from './weatherIcons';
 import { useElementSize } from '../../../lib/useElementSize';
+import { sanitizeFontSize } from '../../../lib/fontSizePresets';
 import type { ForecastItem } from '../../../lib/ha/forecast';
 import type { ElementProps } from '../../../grid/elements';
 import styles from './weather.module.css';
@@ -52,10 +53,6 @@ export const DEFAULT_WEATHER_FONT_SIZES: Record<WeatherBucket, number> = {
   md: 15,
   lg: 20,
 };
-
-function sanitizeFontSize(v: unknown, fallback: number): number {
-  return typeof v === 'number' && Number.isFinite(v) ? Math.min(Math.max(Math.round(v), 6), 72) : fallback;
-}
 
 function fmt(n: number | undefined, digits = 0): string {
   return n === undefined || n === null || isNaN(n) ? '–' : n.toFixed(digits);

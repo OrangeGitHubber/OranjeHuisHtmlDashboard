@@ -3,6 +3,7 @@ import { settings } from '../../../lib/settings';
 import { navigate } from '../../../lib/router';
 import { PersonCard } from '../../people/PersonCard';
 import { useElementSize } from '../../../lib/useElementSize';
+import { sanitizeFontSize } from '../../../lib/fontSizePresets';
 import type { ElementProps } from '../../../grid/elements';
 import styles from './presence.module.css';
 
@@ -20,6 +21,22 @@ export function presenceBucket(width: number, height: number): PresenceBucket {
   const rank = Math.min(widthRank, heightRank);
   return (['xs', 'sm', 'md', 'lg'] as const)[rank];
 }
+
+/** verified with a live harness at each bucket's own worst-case width/height
+    (down to an extreme 180x60) — user-configurable via element.options,
+    same reasoning as weather's DEFAULT_WEATHER_FONT_SIZES. */
+export const DEFAULT_PRESENCE_TITLE_FONT_SIZES: Record<PresenceBucket, number> = {
+  xs: 15,
+  sm: 19,
+  md: 24,
+  lg: 30,
+};
+export const DEFAULT_PRESENCE_COUNT_FONT_SIZES: Record<PresenceBucket, number> = {
+  xs: 12,
+  sm: 15,
+  md: 19,
+  lg: 24,
+};
 
 /**
  * Per-instance options (element.options):
@@ -40,6 +57,10 @@ export interface PresenceOptions {
   showAddress?: boolean;
   /** show when each person's device last checked in */
   showLastSeen?: boolean;
+  /** per-bucket px override for the "Family" title text */
+  titleFontSizes?: Partial<Record<PresenceBucket, number>>;
+  /** per-bucket px override for the "3/4 home" count badge */
+  countFontSizes?: Partial<Record<PresenceBucket, number>>;
 }
 
 export default function PresenceWidget({ element }: ElementProps) {
@@ -50,13 +71,21 @@ export default function PresenceWidget({ element }: ElementProps) {
   const home = shown.filter((p) => p.state === 'home').length;
   const { ref, size } = useElementSize<HTMLDivElement>();
   const bucket = presenceBucket(size.width, size.height);
+  const titlePx = sanitizeFontSize(o.titleFontSizes?.[bucket], DEFAULT_PRESENCE_TITLE_FONT_SIZES[bucket]);
+  const countPx = sanitizeFontSize(o.countFontSizes?.[bucket], DEFAULT_PRESENCE_COUNT_FONT_SIZES[bucket]);
 
   return (
     <div class={styles.card} ref={ref} data-bucket={bucket}>
-      <h2 class={`${styles.title} card-title`}>
+      <h2
+        class={`${styles.title} card-title`}
+        style={{ fontSize: `calc(${titlePx}px * var(--ui-scale, 1))` }}
+      >
         Family
         {shown.length > 0 && (
-          <span class={styles.count}>
+          <span
+            class={styles.count}
+            style={{ fontSize: `calc(${countPx}px * var(--ui-scale, 1))` }}
+          >
             {home}/{shown.length} home
           </span>
         )}

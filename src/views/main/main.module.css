@@ -156,27 +156,14 @@
 }
 
 /* discrete size presets (see dayBucket() in WeekCalendar.tsx) instead of a
-   continuous cqi formula, applied to every direct child (entries, the
-   empty-state message) so everything below sizes in em from it. Values are
+   continuous cqi formula. Per-bucket px value (DEFAULT_AGENDA_FONT_SIZES,
+   user-overridable via element.options.agendaFontSizes) is applied as an
+   inline style directly on this element in WeekCalendar.tsx (via
+   ClampedList's style prop) rather than as a CSS rule — entries (direct
+   children) then inherit it normally, same as .day below. Values are
    smaller than .day's own at the same bucket name — an agenda entry is a
    single wide row, not a narrow stacked column, so it can afford more text
-   per em without wrapping/clipping. Default (no bucket yet, e.g. first
-   paint) matches 'sm' as a reasonable middle ground. */
-.agenda > * {
-  font-size: calc(13px * var(--ui-scale, 1));
-}
-.agenda[data-bucket='xs'] > * {
-  font-size: calc(11px * var(--ui-scale, 1));
-}
-.agenda[data-bucket='sm'] > * {
-  font-size: calc(13px * var(--ui-scale, 1));
-}
-.agenda[data-bucket='md'] > * {
-  font-size: calc(15px * var(--ui-scale, 1));
-}
-.agenda[data-bucket='lg'] > * {
-  font-size: calc(18px * var(--ui-scale, 1));
-}
+   per em without wrapping/clipping. */
 
 .agendaEmpty {
   color: var(--text-dim);
@@ -204,26 +191,16 @@
    continuous cqi formula — WeekBoard measures the shared grid container
    once (every day column is equal width) and derives each day's actual
    pixel width, so this now reacts to real size rather than a ratio of it.
-   Applied to every direct child (header, events list) so everything below
-   sizes in em from it. Same bucket function and DOM attribute serve both
-   the horizontal grid and the stacked/vertical layout — a stacked day is
-   just much wider, so it naturally lands in a bigger bucket without a
-   separate ratio. Default (no bucket yet, e.g. first paint) matches 'sm'. */
-.day > * {
-  font-size: calc(15px * var(--ui-scale, 1));
-}
-.day[data-bucket='xs'] > * {
-  font-size: calc(12px * var(--ui-scale, 1));
-}
-.day[data-bucket='sm'] > * {
-  font-size: calc(15px * var(--ui-scale, 1));
-}
-.day[data-bucket='md'] > * {
-  font-size: calc(19px * var(--ui-scale, 1));
-}
-.day[data-bucket='lg'] > * {
-  font-size: calc(24px * var(--ui-scale, 1));
-}
+   Per-bucket px value (DEFAULT_DAY_FONT_SIZES, user-overridable via
+   element.options.dayFontSizes) is applied as an inline style directly on
+   this element in WeekCalendar.tsx rather than as a CSS rule — header and
+   events list (direct children) then inherit it normally, no `> *` rule
+   needed (that pattern was a leftover from the old cqi container-query
+   system, which couldn't measure its own element and had to set the value
+   one level down; JS-measured buckets don't have that constraint). Same
+   bucket function and DOM attribute serve both the horizontal grid and the
+   stacked/vertical layout — a stacked day is just much wider, so it
+   naturally lands in a bigger bucket without a separate ratio. */
 
 .day.today {
   border-color: var(--accent);
