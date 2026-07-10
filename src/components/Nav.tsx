@@ -74,15 +74,17 @@ export function Nav() {
         <span class="nav-brand-title">{s.title}</span>
         {s.subtitle && <span class="nav-brand-sub">{s.subtitle}</span>}
       </div>
-      {s.pages.map((p) => (
-        <NavButton
-          key={p.id}
-          id={p.id}
-          title={p.title}
-          icon={iconPath(p.icon)}
-          active={activeId === p.id}
-        />
-      ))}
+      {s.pages
+        .filter((p) => !p.hidden)
+        .map((p) => (
+          <NavButton
+            key={p.id}
+            id={p.id}
+            title={p.title}
+            icon={iconPath(p.icon)}
+            active={activeId === p.id}
+          />
+        ))}
       <div class="nav-bottom">
         <div class="nav-extra">
           <span class="nav-screen" title="Current dashboard">

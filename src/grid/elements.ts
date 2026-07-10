@@ -105,4 +105,12 @@ export const elementDefs: Record<string, ElementDef> = {
     defaultSize: { w: 24, h: 8 },
     minSize: { w: 2, h: 4 },
   },
+  popup: {
+    type: 'popup',
+    title: 'Room popup',
+    load: () => import('../elements/PopupCard'),
+    optionsLoader: () => import('../elements/PopupOptionsEditor'),
+    defaultSize: { w: 6, h: 4 },
+    minSize: { w: 2, h: 2 },
+  },
 };

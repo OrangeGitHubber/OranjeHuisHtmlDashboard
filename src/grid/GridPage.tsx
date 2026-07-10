@@ -47,7 +47,17 @@ function UnknownCard({ type }: { type: string }) {
   return <div class={styles.unknown}>“{type}” is not supported in this version</div>;
 }
 
-export default function GridPage({ pageId }: { pageId: string }) {
+export default function GridPage({
+  pageId,
+  readOnly,
+}: {
+  pageId: string;
+  /** view-only, no edit FAB — used when embedding a page inside a Popup
+      element's modal, where a second fixed-position pencil FAB would
+      visually overlap the outer page's own (both are position:fixed, so
+      neither is actually scoped to the modal) */
+  readOnly?: boolean;
+}) {
   const page = settings.value.pages.find((p) => p.id === pageId);
   const narrow = useMediaQuery('(max-width: 699px)');
   const [editing, setEditing] = useState(false);
@@ -341,7 +351,7 @@ export default function GridPage({ pageId }: { pageId: string }) {
         )}
       </div>
 
-      {!editing && (
+      {!editing && !readOnly && (
         <button class={styles.fab} onClick={() => setEditing(true)} aria-label="Edit layout">
           <svg viewBox="0 0 24 24">
             <path d={PENCIL} fill="currentColor" />

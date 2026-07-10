@@ -6,6 +6,7 @@ import {
   renamePage,
   setPageIcon,
   setPageShowTitles,
+  setPageHidden,
   movePage,
 } from '../../lib/settings';
 import { currentRoute, navigate } from '../../lib/router';
@@ -60,6 +61,20 @@ export function PagesEditor() {
               <option value="show">Titles: show</option>
               <option value="hide">Titles: hide</option>
             </select>
+            <label
+              class={styles.pageHiddenToggle}
+              title="Hidden pages don't show in the sidebar but can still be opened by a Popup element or by navigating to them directly"
+            >
+              <input
+                type="checkbox"
+                checked={!!p.hidden}
+                onChange={(e) => setPageHidden(p.id, (e.target as HTMLInputElement).checked)}
+              />
+              Hidden
+            </label>
+            <button class={styles.pageOpenBtn} onClick={() => navigate(p.id)}>
+              Open ↗
+            </button>
             <span class={styles.widgetArrows}>
               <button onClick={() => movePage(p.id, -1)} disabled={i === 0} aria-label="Move up">
                 ▲

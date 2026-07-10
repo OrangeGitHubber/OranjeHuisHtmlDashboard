@@ -36,6 +36,10 @@ export interface PageDef {
   background?: string;
   /** frosted-glass strength 0–100 (blur amount); default 50 */
   backgroundGlass?: number;
+  /** true = reachable by id (e.g. a Popup element's target) but not listed in
+      the nav sidebar — used for "room" pages meant to be opened from a
+      floor page's popup tile rather than navigated to directly */
+  hidden?: boolean;
 }
 
 export interface AppSettings {
@@ -216,6 +220,7 @@ function normalizePages(raw: unknown): PageDef[] {
           : {}),
         ...(typeof pg.showTitles === 'boolean' ? { showTitles: pg.showTitles } : {}),
         ...(typeof pg.fitHeight === 'boolean' ? { fitHeight: pg.fitHeight } : {}),
+        ...(typeof pg.hidden === 'boolean' ? { hidden: pg.hidden } : {}),
       });
     }
   }
@@ -470,13 +475,14 @@ function patchPage(pageId: string, patch: Partial<PageDef>): void {
   });
 }
 
-export function addPage(): PageDef {
+export function addPage(opts?: { title?: string; hidden?: boolean }): PageDef {
   const page: PageDef = {
     id: newId('p'),
-    title: 'New page',
+    title: opts?.title?.trim() || 'New page',
     icon: 'home',
     kind: 'grid',
     elements: [],
+    ...(opts?.hidden ? { hidden: true } : {}),
   };
   updateSettings({ pages: [...settings.peek().pages, page] });
   return page;
@@ -495,6 +501,12 @@ export function renamePage(pageId: string, title: string): void {
 
 export function setPageIcon(pageId: string, icon: string): void {
   patchPage(pageId, { icon });
+}
+
+/** true = hide from the nav sidebar (still reachable by id, e.g. via a
+    Popup element or a direct navigate() call). */
+export function setPageHidden(pageId: string, hidden: boolean): void {
+  patchPage(pageId, { hidden });
 }
 
 export function setPageBackground(pageId: string, url: string | undefined): void {
