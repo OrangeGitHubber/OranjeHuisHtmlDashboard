@@ -112,7 +112,15 @@
      card edge (clipped exactly at the border now); the 1px border still
      separates cards. */
   overflow: hidden;
-  container-type: inline-size; /* lets cards scale type with cqw units */
+  /* both axes, not just width: a widget's real constraint is its actual
+     rendered box (which already reflects how many grid columns AND rows
+     it spans), so type/icon scaling can be driven by whichever of
+     width (cqi/cqw) or height (cqb/cqh) is more constraining instead of
+     only ever considering width and ignoring the tile's height entirely.
+     Safe here because .itemContent's own size already comes from .item's
+     explicit inline width/height (the grid layout), never from its
+     content, so there's no size/content circularity. */
+  container-type: size;
   /* recompute here so a per-element --card-alpha (set inline on .item)
      overrides the :root-level computation; the border fades with the card */
   --surface-card: color-mix(in srgb, var(--surface) var(--card-alpha, 100%), transparent);

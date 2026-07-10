@@ -7,10 +7,15 @@
   gap: 0.875em;
   align-content: start;
   height: 100%;
-  /* Anchor all text to one width-driven size (times the optional --ui-scale
-     slider), children size in em. Floors at 1rem so it never shrinks below
-     the design baseline; grows on wider/high-res displays. */
-  font-size: clamp(1rem, calc(3.2cqi * var(--ui-scale, 1)), 2.2rem);
+  /* Anchor all text to one size (times the optional --ui-scale slider),
+     children size in em. Floors at 1rem so it never shrinks below the
+     design baseline; grows on wider/high-res displays. Bounded by BOTH
+     width (cqi) and height (cqb) — this card stacks four sections
+     (title, current conditions, 7-day row, hourly row), so on a short
+     but wide tile, width alone would happily grow the font past what the
+     tile's actual height can fit, pushing the hourly row (or more) out
+     of view instead of clipping cleanly. Whichever axis is tighter wins. */
+  font-size: clamp(1rem, calc(min(3.2cqi, 6.2cqb) * var(--ui-scale, 1)), 2.2rem);
 }
 
 .title {
