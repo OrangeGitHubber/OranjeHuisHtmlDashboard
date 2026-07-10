@@ -120,14 +120,8 @@
   height: 100%;
 }
 
-/* stacked days span the full widget width, so use a gentler width factor to
-   avoid oversized text (phones and vertical-layout desktops) */
 .weekGridV .day {
   min-height: 0;
-}
-
-.weekGridV .day > * {
-  font-size: clamp(0.8rem, calc(3.6cqi * var(--ui-scale, 1)), 1.7rem);
 }
 
 /* tappable header for collapsed days on phones */
@@ -150,8 +144,6 @@
   display: grid;
   gap: 12px;
   align-content: start;
-  /* query container for the size anchor below (.agenda > *) */
-  container-type: inline-size;
 }
 
 /* opt-in: stretch entries to fill the card height with even gaps between
@@ -163,11 +155,27 @@
   align-content: space-between;
 }
 
-/* the size anchor: cqi off the agenda list's own rendered width (times the
-   optional --ui-scale slider), applied to every direct child (entries, the
-   empty-state message) so everything below sizes in em from it */
+/* discrete size presets (see dayBucket() in WeekCalendar.tsx) instead of a
+   continuous cqi formula, applied to every direct child (entries, the
+   empty-state message) so everything below sizes in em from it. Values are
+   smaller than .day's own at the same bucket name — an agenda entry is a
+   single wide row, not a narrow stacked column, so it can afford more text
+   per em without wrapping/clipping. Default (no bucket yet, e.g. first
+   paint) matches 'sm' as a reasonable middle ground. */
 .agenda > * {
-  font-size: clamp(0.8rem, calc(4.9cqi * var(--ui-scale, 1)), 1.7rem);
+  font-size: calc(13px * var(--ui-scale, 1));
+}
+.agenda[data-bucket='xs'] > * {
+  font-size: calc(11px * var(--ui-scale, 1));
+}
+.agenda[data-bucket='sm'] > * {
+  font-size: calc(13px * var(--ui-scale, 1));
+}
+.agenda[data-bucket='md'] > * {
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+.agenda[data-bucket='lg'] > * {
+  font-size: calc(18px * var(--ui-scale, 1));
 }
 
 .agendaEmpty {
@@ -190,24 +198,31 @@
      height and any overflow is handled inside .dayEvents (see ClampedList
      in WeekCalendar.tsx) instead of bleeding out here. */
   overflow: hidden;
-  /* query container for the size anchor below (.day > *). A cqi unit can't
-     measure the element that declares container-type itself — it silently
-     resolves against the next ancestor container instead, which in the
-     7-column week grid is the whole widget (several times wider than one
-     day column) — so the anchor has to live on the children, not here. */
-  container-type: inline-size;
 }
 
-/* the size anchor: cqi off this day column's own rendered width (times the
-   optional --ui-scale slider), applied to every direct child (header,
-   events list) so everything below sizes in em from it. Floors at 0.8rem so
-   it never gets unreadable, grows on wider/high-res displays. Ratio matches
-   people.module.css's .card (6.6cqi) since day columns and person cards are
-   structurally the same shape — a grid of same-width cards — and should
-   read at the same relative size instead of each widget inventing its own
-   ratio. */
+/* discrete size presets (see dayBucket() in WeekCalendar.tsx) instead of a
+   continuous cqi formula — WeekBoard measures the shared grid container
+   once (every day column is equal width) and derives each day's actual
+   pixel width, so this now reacts to real size rather than a ratio of it.
+   Applied to every direct child (header, events list) so everything below
+   sizes in em from it. Same bucket function and DOM attribute serve both
+   the horizontal grid and the stacked/vertical layout — a stacked day is
+   just much wider, so it naturally lands in a bigger bucket without a
+   separate ratio. Default (no bucket yet, e.g. first paint) matches 'sm'. */
 .day > * {
-  font-size: clamp(0.8rem, calc(6.6cqi * var(--ui-scale, 1)), 1.7rem);
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+.day[data-bucket='xs'] > * {
+  font-size: calc(12px * var(--ui-scale, 1));
+}
+.day[data-bucket='sm'] > * {
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+.day[data-bucket='md'] > * {
+  font-size: calc(19px * var(--ui-scale, 1));
+}
+.day[data-bucket='lg'] > * {
+  font-size: calc(24px * var(--ui-scale, 1));
 }
 
 .day.today {

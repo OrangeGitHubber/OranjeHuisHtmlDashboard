@@ -7,15 +7,38 @@
   gap: 0.875em;
   align-content: start;
   height: 100%;
-  /* Anchor all text to one size (times the optional --ui-scale slider),
-     children size in em. Floors at 1rem so it never shrinks below the
-     design baseline; grows on wider/high-res displays. Bounded by BOTH
-     width (cqi) and height (cqb) — this card stacks four sections
-     (title, current conditions, 7-day row, hourly row), so on a short
-     but wide tile, width alone would happily grow the font past what the
-     tile's actual height can fit, pushing the hourly row (or more) out
-     of view instead of clipping cleanly. Whichever axis is tighter wins. */
-  font-size: clamp(1rem, calc(min(3.2cqi, 5.4cqb) * var(--ui-scale, 1)), 2.2rem);
+}
+
+/* Discrete size presets (see weatherBucket() in WeatherWidget.tsx) instead
+   of a continuous cqi/cqb formula. The card stacks up to four sections
+   (title, current conditions, 7-day row, hourly row); a single formula has
+   to hold correctly at every possible pixel size simultaneously, which
+   proved too fragile to calibrate by hand (see git log — two rounds of
+   retuning one ratio, still wrong at some real sizes). Each bucket below
+   only has to be correct at its own tested size range — verified with a
+   live harness against real content, not estimated. xs additionally drops
+   the hourly row entirely (WeatherWidget's showHourly) rather than
+   shrinking text past a readable floor. Children size in em off whichever
+   value applies; --ui-scale still multiplies as a manual override. */
+/* Each value is the largest that still fits the bucket's own worst-case
+   (smallest) size within its range, verified empirically, not estimated —
+   sm's value being smaller than xs's is intentional, not a mistake: sm is
+   where the hourly row reappears (xs drops it), so despite a similar box
+   size sm has to fit noticeably more content. */
+.card[data-bucket='xs'] {
+  font-size: calc(12px * var(--ui-scale, 1));
+}
+
+.card[data-bucket='sm'] {
+  font-size: calc(11px * var(--ui-scale, 1));
+}
+
+.card[data-bucket='md'] {
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+
+.card[data-bucket='lg'] {
+  font-size: calc(20px * var(--ui-scale, 1));
 }
 
 .title {

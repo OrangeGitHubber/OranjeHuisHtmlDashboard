@@ -2,12 +2,34 @@ import { useEntity } from '../../../lib/ha/entities';
 import { settings } from '../../../lib/settings';
 import { useForecast } from './useForecast';
 import { conditionIcon, conditionLabel } from './weatherIcons';
+import { useElementSize } from '../../../lib/useElementSize';
 import type { ForecastItem } from '../../../lib/ha/forecast';
 import type { ElementProps } from '../../../grid/elements';
 import styles from './weather.module.css';
 
 const SUPPORTS_DAILY = 1;
 const SUPPORTS_HOURLY = 2;
+
+/**
+ * Discrete size preset instead of a continuous formula: the card stacks up
+ * to four sections (title, current conditions, 7-day row, hourly row), so
+ * width-only or one-shot-calibrated cqi/cqb math kept drifting out of sync
+ * with what the real content actually needs at a given size (see git log —
+ * two rounds of retuning a single ratio, still wrong). A handful of
+ * hand-verified fixed layouts is far easier to get right: each bucket only
+ * has to be correct at its own tested size, not for every possible pixel
+ * combination at once. Whichever axis (width or height) is more
+ * constrained picks the bucket, same reasoning as before, just discrete now
+ * instead of continuous.
+ */
+export type WeatherBucket = 'xs' | 'sm' | 'md' | 'lg';
+
+export function weatherBucket(width: number, height: number): WeatherBucket {
+  const widthRank = width < 480 ? 0 : width < 720 ? 1 : width < 960 ? 2 : 3;
+  const heightRank = height < 230 ? 0 : height < 320 ? 1 : height < 420 ? 2 : 3;
+  const rank = Math.min(widthRank, heightRank);
+  return (['xs', 'sm', 'md', 'lg'] as const)[rank];
+}
 
 function fmt(n: number | undefined, digits = 0): string {
   return n === undefined || n === null || isNaN(n) ? '–' : n.toFixed(digits);
@@ -49,10 +71,16 @@ export default function WeatherWidget({ element }: ElementProps) {
     'hourly',
     available && (features & SUPPORTS_HOURLY) !== 0,
   );
+  const { ref, size } = useElementSize<HTMLDivElement>();
+  const bucket = weatherBucket(size.width, size.height);
+  // xs is tight enough that even the smallest readable text can't fit all
+  // three sections (see the calibration notes in weather.module.css) — drop
+  // the hourly row rather than clip it mid-row
+  const showHourly = bucket !== 'xs';
 
   if (!entityId) {
     return (
-      <div class={styles.card}>
+      <div class={styles.card} ref={ref} data-bucket={bucket}>
         <h2 class={`${styles.title} card-title`}>Weather</h2>
         <div class={styles.hint}>
           <p>No weather entity selected — tap this card in page edit mode to pick one.</p>
@@ -63,7 +91,7 @@ export default function WeatherWidget({ element }: ElementProps) {
 
   if (!entity) {
     return (
-      <div class={styles.card}>
+      <div class={styles.card} ref={ref} data-bucket={bucket}>
         <h2 class={`${styles.title} card-title`}>Weather</h2>
         <p class={styles.hintText}>
           Entity <code>{entityId}</code> was not found in Home Assistant.
@@ -77,7 +105,7 @@ export default function WeatherWidget({ element }: ElementProps) {
   const windUnit = (a.wind_speed_unit as string | undefined) ?? '';
 
   return (
-    <div class={styles.card}>
+    <div class={styles.card} ref={ref} data-bucket={bucket}>
       <h2 class={`${styles.title} card-title`}>Weather</h2>
 
       <div class={styles.current}>
@@ -138,7 +166,7 @@ export default function WeatherWidget({ element }: ElementProps) {
         </div>
       )}
 
-      {hourly.length > 0 && (
+      {showHourly && hourly.length > 0 && (
         <div class={styles.hourlyScroll}>
           <div class={styles.hourlyRow}>
             {hourly.slice(0, 12).map((h) => (

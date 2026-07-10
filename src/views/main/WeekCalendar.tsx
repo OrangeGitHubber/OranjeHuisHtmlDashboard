@@ -3,10 +3,31 @@ import { useCalendarEvents, calendarColor } from './useCalendarEvents';
 import { settings } from '../../lib/settings';
 import { pageIcons } from '../../lib/icons';
 import { useMediaQuery } from '../../lib/useMediaQuery';
+import { useElementSize } from '../../lib/useElementSize';
 import { ClampedList } from '../../components/ClampedList';
 import type { CalendarEvent } from '../../lib/types';
 import type { ElementProps } from '../../grid/elements';
 import styles from './main.module.css';
+
+/** Discrete size preset for day columns and agenda entries — see
+    weatherBucket() in WeatherWidget.tsx for the full rationale. Unlike
+    weather, day/agenda text was always sized off width alone (the old
+    cqi-only formulas never had a cqb term — ClampedList already handles the
+    height-fitting problem by clipping/paging, so font-size never needed to
+    react to height here), so this only takes one dimension. That also means
+    the same bucket function works for both the horizontal week-grid (each
+    column ~158px+) and the stacked/vertical layout (each day spans the full
+    widget width) — it's just measuring real pixels now instead of a cqi
+    ratio, so a wide stacked day naturally lands in a bigger bucket without
+    needing a separate "gentler" ratio the way the old formula did. */
+export type DayBucket = 'xs' | 'sm' | 'md' | 'lg';
+
+export function dayBucket(width: number): DayBucket {
+  if (width < 180) return 'xs';
+  if (width < 260) return 'sm';
+  if (width < 360) return 'md';
+  return 'lg';
+}
 
 /**
  * Calendar element. Each placed instance has its own options
@@ -234,6 +255,18 @@ function WeekBoard({
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const toggle = (t: number) => setExpandedDay((prev) => (prev === t ? null : t));
 
+  // one measurement for the whole grid — every day column shares the same
+  // width (equal 1fr columns in grid mode, full width in stacked mode), so
+  // there's no need to measure each day separately
+  const { ref: gridRef, size: gridSize } = useElementSize<HTMLDivElement>();
+  const GRID_GAP = 8;
+  const perDayWidth = stacked
+    ? gridSize.width
+    : days > 0
+      ? (gridSize.width - GRID_GAP * (days - 1)) / days
+      : gridSize.width;
+  const bucket = dayBucket(perDayWidth);
+
   const dayEventItems = (day: Day) =>
     day.events.map((ev, i) => (
       <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>
@@ -267,14 +300,22 @@ function WeekBoard({
 
   return (
     <div class={stacked ? styles.weekStack : styles.weekScroll}>
-      <div class={stacked ? styles.weekGridV : styles.weekGrid} style={gridStyle}>
+      <div
+        ref={gridRef}
+        class={stacked ? styles.weekGridV : styles.weekGrid}
+        style={gridStyle}
+      >
         {board.map((day) => {
           const t = day.start.getTime();
           const collapse = collapsible;
           const open = !collapse || expandedDay === t;
           const showSkeleton = loading && events.length === 0;
           return (
-            <div key={t} class={`${styles.day}${day.isToday ? ` ${styles.today}` : ''}`}>
+            <div
+              key={t}
+              class={`${styles.day}${day.isToday ? ` ${styles.today}` : ''}`}
+              data-bucket={bucket}
+            >
               <header
                 class={`${styles.dayHeader}${collapse ? ` ${styles.dayHeaderTap}` : ''}`}
                 onClick={collapse ? () => toggle(t) : undefined}
@@ -325,10 +366,12 @@ function AgendaList({
   const now = new Date();
   const upcoming = events.filter((ev) => ev.end > now).slice(0, count);
   const agendaClass = `${styles.agenda}${fill ? ` ${styles.agendaFill}` : ''}`;
+  const [width, setWidth] = useState(0);
+  const bucket = dayBucket(width);
 
   if (loading && events.length === 0) {
     return (
-      <div class={agendaClass}>
+      <div class={agendaClass} data-bucket={bucket}>
         <div class={styles.eventSkeleton} />
         <div class={styles.eventSkeleton} />
         <div class={styles.eventSkeleton} />
@@ -337,7 +380,7 @@ function AgendaList({
   }
   if (upcoming.length === 0) {
     return (
-      <div class={agendaClass}>
+      <div class={agendaClass} data-bucket={bucket}>
         <p class={styles.agendaEmpty}>No upcoming entries.</p>
       </div>
     );
@@ -347,6 +390,8 @@ function AgendaList({
     <ClampedList
       class={agendaClass}
       pillClass={styles.morePill}
+      bucket={bucket}
+      onResize={(w) => setWidth(w)}
       items={upcoming.map((ev, i) => (
         <div key={i} title={ev.calendarName} {...eventProps(marker, ev.calendarId)}>
           {marker === 'dot' && (

@@ -9,16 +9,44 @@
   height: 100%;
 }
 
+/* Discrete size presets (see presenceBucket() in PresenceWidget.tsx)
+   instead of a continuous cqi formula — same width-only-ignores-height
+   issue as weather had, applied here for consistency even though this
+   header is a much lower-risk single line of text. */
 .title {
-  font-size: clamp(0.85rem, calc(4.2cqi * var(--ui-scale, 1)), 2rem);
   font-weight: 650;
   color: var(--text-dim);
 }
 
+.card[data-bucket='xs'] .title {
+  font-size: calc(12px * var(--ui-scale, 1));
+}
+.card[data-bucket='sm'] .title {
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+.card[data-bucket='md'] .title {
+  font-size: calc(19px * var(--ui-scale, 1));
+}
+.card[data-bucket='lg'] .title {
+  font-size: calc(24px * var(--ui-scale, 1));
+}
+
 .count {
   margin-left: 10px;
-  font-size: clamp(0.66rem, calc(3.3cqi * var(--ui-scale, 1)), 1.5rem);
   font-weight: 550;
+}
+
+.card[data-bucket='xs'] .count {
+  font-size: calc(10px * var(--ui-scale, 1));
+}
+.card[data-bucket='sm'] .count {
+  font-size: calc(12px * var(--ui-scale, 1));
+}
+.card[data-bucket='md'] .count {
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+.card[data-bucket='lg'] .count {
+  font-size: calc(19px * var(--ui-scale, 1));
 }
 
 /* both layouts fill the remaining widget height and stretch cards to fit,

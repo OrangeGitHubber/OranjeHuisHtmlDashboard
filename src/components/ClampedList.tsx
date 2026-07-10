@@ -19,6 +19,8 @@ export function ClampedList({
   fewerLabel,
   class: className,
   pillClass,
+  bucket,
+  onResize,
 }: {
   /** one element per item, in render order (each needs its own `key`) */
   items: JSX.Element[];
@@ -27,6 +29,15 @@ export function ClampedList({
   fewerLabel: string;
   class: string;
   pillClass: string;
+  /** discrete size-preset bucket (see dayBucket() in WeekCalendar.tsx),
+      rendered as a `data-bucket` attribute for CSS to key off — this
+      component owns the only ref on its root, so a caller that needs its
+      rendered width for bucketing has no other way to measure it */
+  bucket?: string;
+  /** fires whenever the root element's size changes; independent of the
+      item-fit ResizeObserver below since that one skips measuring while
+      expanded, but width (what bucketing needs) doesn't change with it */
+  onResize?: (width: number, height: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(items.length);
@@ -91,12 +102,23 @@ export function ClampedList({
     return () => ro.disconnect();
   }, [items, count, expanded]);
 
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !onResize) return;
+    const report = () => onResize(el.clientWidth, el.clientHeight);
+    report();
+    const ro = new ResizeObserver(report);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [onResize]);
+
   const hidden = count - visibleCount;
 
   return (
     <div
       ref={ref}
       class={className}
+      data-bucket={bucket}
       style={{ position: 'relative', overflowY: expanded ? 'auto' : 'hidden' }}
     >
       {items}
