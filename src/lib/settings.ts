@@ -74,6 +74,14 @@ export interface AppSettings {
   nightDimAmount: number;
   /** minutes of inactivity before dimming resumes after user activity */
   nightDimResume: number;
+  /** full-screen swirling screensaver during the night window (burn-in
+      protection for always-on wall displays); shares the night window +
+      idle trigger with nightDim but toggles independently */
+  screensaver: boolean;
+  /** screensaver brightness in percent (5–80): how visible the swirl is */
+  screensaverBrightness: number;
+  /** screensaver motion speed (1–10; higher = faster) */
+  screensaverSpeed: number;
   weather: { entityId: string | null };
   presence: { personIds: string[] | null };
   calendars: { selected: string[] | null };
@@ -143,6 +151,9 @@ function defaults(): AppSettings {
     nightDimEnd: '07:00',
     nightDimAmount: 40,
     nightDimResume: 2,
+    screensaver: false,
+    screensaverBrightness: 35,
+    screensaverSpeed: 3,
     weather: { entityId: null },
     presence: { personIds: null },
     calendars: { selected: null },
@@ -326,6 +337,15 @@ function normalize(raw: unknown): AppSettings {
       typeof r.nightDimResume === 'number' && Number.isFinite(r.nightDimResume)
         ? Math.min(Math.max(Math.round(r.nightDimResume), 1), 60)
         : base.nightDimResume,
+    screensaver: r.screensaver === true,
+    screensaverBrightness:
+      typeof r.screensaverBrightness === 'number' && Number.isFinite(r.screensaverBrightness)
+        ? Math.min(Math.max(Math.round(r.screensaverBrightness), 5), 80)
+        : base.screensaverBrightness,
+    screensaverSpeed:
+      typeof r.screensaverSpeed === 'number' && Number.isFinite(r.screensaverSpeed)
+        ? Math.min(Math.max(Math.round(r.screensaverSpeed), 1), 10)
+        : base.screensaverSpeed,
     weather: {
       entityId:
         r.weather && typeof (r.weather as { entityId?: unknown }).entityId === 'string'

@@ -7,6 +7,7 @@ import { settingsLoader } from '../views/registry';
 import { Nav } from './Nav';
 import { StatusBanner } from './StatusBanner';
 import { AsyncView } from './AsyncView';
+import { Screensaver } from './Screensaver';
 
 const gridPageLoader = () => import('../grid/GridPage');
 
@@ -44,9 +45,14 @@ export function Shell() {
   const end = toMin(s.nightDimEnd);
   // window may wrap past midnight (22:00 → 07:00)
   const inWindow = start <= end ? cur >= start && cur < end : cur >= start || cur < end;
-  // user activity lifts the dim; it returns after the configured idle time
+  // user activity lifts both night features; they return after the idle time
   const idle = useIdle(s.nightDimResume * 60_000);
-  const nightDim = s.nightDim && inWindow && idle;
+  const nightIdle = inWindow && idle;
+  const nightDim = s.nightDim && nightIdle;
+  // the screensaver shares the night window + idle trigger but toggles on its
+  // own; when active it fully covers the dashboard (its own opaque base), so
+  // it supersedes the partial dim overlay above it
+  const showSaver = s.screensaver && nightIdle;
 
   return (
     <div class="shell">
@@ -68,6 +74,9 @@ export function Shell() {
           style={{ background: `rgba(0, 0, 0, ${s.nightDimAmount / 100})` }}
           aria-hidden="true"
         />
+      )}
+      {showSaver && (
+        <Screensaver brightness={s.screensaverBrightness} speed={s.screensaverSpeed} />
       )}
     </div>
   );

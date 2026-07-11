@@ -134,7 +134,7 @@ export default function SettingsView() {
       </section>
 
       <section class={styles.section}>
-        <h2>Night dimming</h2>
+        <h2>Night dimming &amp; screensaver</h2>
         <label class={styles.checkItem}>
           <input
             type="checkbox"
@@ -143,7 +143,17 @@ export default function SettingsView() {
           />
           Dim the display at night
         </label>
-        {s.nightDim && (
+        <label class={styles.checkItem}>
+          <input
+            type="checkbox"
+            checked={s.screensaver}
+            onChange={(e) =>
+              updateSettings({ screensaver: (e.target as HTMLInputElement).checked })
+            }
+          />
+          Show a swirling screensaver at night (burn-in protection)
+        </label>
+        {(s.nightDim || s.screensaver) && (
           <>
             <div class={styles.fieldRow}>
               <label class={styles.field}>
@@ -167,21 +177,6 @@ export default function SettingsView() {
                 />
               </label>
               <label class={styles.field}>
-                Dim %
-                <input
-                  type="number"
-                  min={10}
-                  max={90}
-                  value={s.nightDimAmount}
-                  onChange={(e) => {
-                    const n = Math.round(Number((e.target as HTMLInputElement).value));
-                    updateSettings({
-                      nightDimAmount: Number.isFinite(n) ? Math.min(Math.max(n, 10), 90) : 40,
-                    });
-                  }}
-                />
-              </label>
-              <label class={styles.field}>
                 Resume after (min)
                 <input
                   type="number"
@@ -197,9 +192,66 @@ export default function SettingsView() {
                 />
               </label>
             </div>
+            {s.nightDim && (
+              <div class={styles.fieldRow}>
+                <label class={styles.field}>
+                  Dim %
+                  <input
+                    type="number"
+                    min={10}
+                    max={90}
+                    value={s.nightDimAmount}
+                    onChange={(e) => {
+                      const n = Math.round(Number((e.target as HTMLInputElement).value));
+                      updateSettings({
+                        nightDimAmount: Number.isFinite(n) ? Math.min(Math.max(n, 10), 90) : 40,
+                      });
+                    }}
+                  />
+                </label>
+              </div>
+            )}
+            {s.screensaver && (
+              <div class={styles.fieldRow}>
+                <label class={styles.field}>
+                  Screensaver brightness %
+                  <input
+                    type="number"
+                    min={5}
+                    max={80}
+                    value={s.screensaverBrightness}
+                    onChange={(e) => {
+                      const n = Math.round(Number((e.target as HTMLInputElement).value));
+                      updateSettings({
+                        screensaverBrightness: Number.isFinite(n)
+                          ? Math.min(Math.max(n, 5), 80)
+                          : 35,
+                      });
+                    }}
+                  />
+                </label>
+                <label class={styles.field}>
+                  Screensaver speed (1–10)
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={s.screensaverSpeed}
+                    onChange={(e) => {
+                      const n = Math.round(Number((e.target as HTMLInputElement).value));
+                      updateSettings({
+                        screensaverSpeed: Number.isFinite(n) ? Math.min(Math.max(n, 1), 10) : 3,
+                      });
+                    }}
+                  />
+                </label>
+              </div>
+            )}
             <p class={styles.dim}>
-              Any touch, mouse or keyboard activity lifts the dimming; it returns after the
-              inactivity timeout.
+              Both use the same night window and clear on any touch, mouse or keyboard activity,
+              returning after the inactivity timeout. The screensaver fully covers the dashboard
+              with a slow moving pattern — it keeps bright pixels drifting to protect always-on
+              screens (like a wall-mounted TV) from burn-in.
             </p>
           </>
         )}

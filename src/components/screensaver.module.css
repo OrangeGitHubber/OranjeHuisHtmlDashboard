@@ -1,0 +1,152 @@
+/* Full-screen swirling screensaver (burn-in protection). Opaque black base
+   fully covers the dashboard; blurred colour layers drift and rotate so the
+   lit pixels never stay in place. Durations divide by --ss-speed (1–10) so a
+   higher speed setting means shorter (faster) cycles. All motion is transform
+   / opacity only, so it stays on the compositor and off the CPU. */
+.screensaver {
+  position: fixed;
+  inset: 0;
+  z-index: 101; /* above the night-dim overlay (100) */
+  background: #000;
+  overflow: hidden;
+  pointer-events: none; /* taps pass through to window listeners, which wake */
+  animation: ss-fade 1.6s ease both;
+}
+
+@keyframes ss-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* wanders the whole swirl slowly so its centre never sits still — spreads the
+   lit region across the entire panel over a full cycle */
+.swirl {
+  position: absolute;
+  inset: 0;
+  opacity: var(--ss-bright, 0.35);
+  animation: ss-drift calc(140s / var(--ss-speed, 3)) ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes ss-drift {
+  0% {
+    transform: translate(-6%, -4%);
+  }
+  50% {
+    transform: translate(5%, 6%);
+  }
+  100% {
+    transform: translate(-3%, 4%);
+  }
+}
+
+/* the rotating swirl disc — an oversized blurred conic gradient */
+.disc {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 170vmax;
+  height: 170vmax;
+  margin: -85vmax 0 0 -85vmax;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--accent) 70%, transparent),
+    rgba(27, 108, 255, 0.33),
+    rgba(168, 59, 255, 0.33),
+    color-mix(in srgb, var(--accent) 70%, transparent),
+    rgba(18, 185, 134, 0.33),
+    color-mix(in srgb, var(--accent) 70%, transparent)
+  );
+  filter: blur(48px);
+  animation: ss-spin calc(60s / var(--ss-speed, 3)) linear infinite;
+  will-change: transform;
+}
+
+@keyframes ss-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* orbiting blobs layer organic, non-repeating motion over the disc */
+.blob {
+  position: absolute;
+  width: 62vmin;
+  height: 62vmin;
+  border-radius: 50%;
+  filter: blur(44px);
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.blob1 {
+  top: 12%;
+  left: 16%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 85%, transparent),
+    transparent 70%
+  );
+  animation: ss-orbit1 calc(46s / var(--ss-speed, 3)) ease-in-out infinite;
+}
+
+.blob2 {
+  top: 55%;
+  left: 60%;
+  background: radial-gradient(circle, rgba(27, 108, 255, 0.67), transparent 70%);
+  animation: ss-orbit2 calc(58s / var(--ss-speed, 3)) ease-in-out infinite;
+}
+
+.blob3 {
+  top: 60%;
+  left: 20%;
+  background: radial-gradient(circle, rgba(168, 59, 255, 0.67), transparent 70%);
+  animation: ss-orbit3 calc(52s / var(--ss-speed, 3)) ease-in-out infinite;
+}
+
+@keyframes ss-orbit1 {
+  0% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(50vw, 18vh);
+  }
+  66% {
+    transform: translate(22vw, 55vh);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes ss-orbit2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(-40vw, 20vh);
+  }
+  66% {
+    transform: translate(-15vw, -35vh);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes ss-orbit3 {
+  0% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(35vw, -25vh);
+  }
+  66% {
+    transform: translate(-20vw, 20vh);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
