@@ -255,6 +255,21 @@ export default function SettingsView() {
             </p>
           </>
         )}
+        <label class={styles.checkItem}>
+          <input
+            type="checkbox"
+            checked={s.idleDebug}
+            onChange={(e) => updateSettings({ idleDebug: (e.target as HTMLInputElement).checked })}
+          />
+          Show input-activity debug overlay (troubleshooting)
+        </label>
+        {s.idleDebug && (
+          <p class={styles.dim}>
+            Shows a small on-screen log of the input events (taps, keys, pointer moves) that lift
+            night dimming. If the display won't stay dimmed, leave this on and note which event
+            appears the instant the dim clears. Turn it off when done.
+          </p>
+        )}
       </section>
 
       <section class={styles.section}>

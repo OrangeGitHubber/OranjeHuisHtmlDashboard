@@ -82,6 +82,9 @@ export interface AppSettings {
   screensaverBrightness: number;
   /** screensaver motion speed (1–10; higher = faster) */
   screensaverSpeed: number;
+  /** troubleshooting: overlay the last input events (type/coords/delta) so a
+      display that won't stay dimmed can be diagnosed without devtools */
+  idleDebug: boolean;
   weather: { entityId: string | null };
   presence: { personIds: string[] | null };
   calendars: { selected: string[] | null };
@@ -154,6 +157,7 @@ function defaults(): AppSettings {
     screensaver: false,
     screensaverBrightness: 35,
     screensaverSpeed: 3,
+    idleDebug: false,
     weather: { entityId: null },
     presence: { personIds: null },
     calendars: { selected: null },
@@ -346,6 +350,7 @@ function normalize(raw: unknown): AppSettings {
       typeof r.screensaverSpeed === 'number' && Number.isFinite(r.screensaverSpeed)
         ? Math.min(Math.max(Math.round(r.screensaverSpeed), 1), 10)
         : base.screensaverSpeed,
+    idleDebug: r.idleDebug === true,
     weather: {
       entityId:
         r.weather && typeof (r.weather as { entityId?: unknown }).entityId === 'string'

@@ -8,6 +8,7 @@ import { Nav } from './Nav';
 import { StatusBanner } from './StatusBanner';
 import { AsyncView } from './AsyncView';
 import { Screensaver } from './Screensaver';
+import { IdleDebugOverlay } from './IdleDebugOverlay';
 
 const gridPageLoader = () => import('../grid/GridPage');
 
@@ -78,6 +79,7 @@ export function Shell() {
       {showSaver && (
         <Screensaver brightness={s.screensaverBrightness} speed={s.screensaverSpeed} />
       )}
+      {s.idleDebug && <IdleDebugOverlay nightActive={nightDim || showSaver} />}
     </div>
   );
 }
