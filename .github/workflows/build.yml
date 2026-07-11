@@ -2,11 +2,7 @@ name: Build
 
 on:
   push:
-    # scaling-presets: experimental discrete-preset widget scaling, published
-    # under its own image tag (never :latest) so it can run side by side with
-    # the real deployment for comparison without touching it. Remove this
-    # branch name once the experiment is merged or abandoned.
-    branches: [main, scaling-presets]
+    branches: [main]
   pull_request:
 
 permissions:
@@ -27,9 +23,7 @@ jobs:
 
   publish-image:
     needs: verify
-    if: |
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/scaling-presets')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,12 +36,9 @@ jobs:
         id: meta
         with:
           images: ghcr.io/${{ github.repository }}
-          # :latest/sha only from main — the experimental branch gets its own
-          # fixed tag so it can never overwrite the real deployment's image
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=scaling-presets,enable=${{ github.ref == 'refs/heads/scaling-presets' }}
+            type=raw,value=latest
+            type=sha
       - uses: docker/build-push-action@v6
         with:
           context: .
