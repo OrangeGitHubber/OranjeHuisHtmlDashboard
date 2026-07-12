@@ -378,12 +378,14 @@ video {
 }
 
 .modal-panel {
-  /* initial size comes from the inline width; resize may grow it up to
-     nearly the whole viewport */
+  /* initial size comes from the inline width (in rem, so it scales with the
+     root font); resize may grow it up to nearly the whole viewport. min-width
+     is rem too so the floor scales with the content instead of pinning a
+     large-font panel to a tiny fixed px width. */
   max-width: 96vw;
   max-height: 92dvh;
-  min-width: 280px;
-  min-height: 160px;
+  min-width: min(17.5rem, 96vw);
+  min-height: 10rem;
   overflow: auto;
   resize: both; /* user-resizable (drag the bottom-right corner) */
   background: var(--surface);

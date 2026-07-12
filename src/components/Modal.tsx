@@ -15,7 +15,11 @@ export function Modal({
   children,
 }: {
   onClose: () => void;
-  /** initial panel width (px); the user can resize beyond it */
+  /** initial panel width, given in px at the 16px design baseline. It's
+      applied as rem so the panel scales with the responsive root font-size
+      (see html font-size in base.css) — otherwise a fixed-px width crams the
+      (rem-sized) content into a proportionally tiny box on a high-res / large
+      display like a wall TV. The user can still resize beyond it. */
   maxWidth?: number;
   children: ComponentChildren;
 }) {
@@ -47,7 +51,10 @@ export function Modal({
     >
       <div
         class="modal-panel"
-        style={{ width: `min(${maxWidth}px, 100%)` }}
+        // rem (not px) so it scales with the root font; 96vw (not 100%) both
+        // caps it to the viewport and avoids the auto-grid-track percentage
+        // ambiguity that could collapse it on some browsers
+        style={{ width: `min(${maxWidth / 16}rem, 96vw)` }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
