@@ -264,6 +264,32 @@ export default function SettingsView() {
                 </label>
               </div>
             )}
+            {nightMode === 'saver' && (
+              <div class={styles.field}>
+                Intensity
+                <div class={styles.modeRow}>
+                  {(
+                    [
+                      ['low', 'Low'],
+                      ['medium', 'Medium'],
+                      ['high', 'High'],
+                    ] as const
+                  ).map(([v, label]) => (
+                    <button
+                      key={v}
+                      class={`${styles.modeBtn}${s.screensaverIntensity === v ? ` ${styles.modeActive}` : ''}`}
+                      onClick={() => updateSettings({ screensaverIntensity: v })}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <span class={styles.dim}>
+                  Lower intensity is much lighter on the GPU — use Low on a Raspberry Pi or any
+                  display where the swirl looks choppy.
+                </span>
+              </div>
+            )}
             <p class={styles.dim}>
               Runs during the window above and clears on any touch, mouse or keyboard activity,
               returning after the inactivity timeout.

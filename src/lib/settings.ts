@@ -82,6 +82,10 @@ export interface AppSettings {
   screensaverBrightness: number;
   /** screensaver motion speed (1–10; higher = faster) */
   screensaverSpeed: number;
+  /** screensaver visual richness vs. GPU cost. 'low' = one lightly-blurred
+      layer (smooth on a Raspberry Pi / weak GPU); 'high' = extra blurred,
+      blended orbiting layers (needs a capable GPU). */
+  screensaverIntensity: 'low' | 'medium' | 'high';
   /** troubleshooting: overlay the last input events (type/coords/delta) so a
       display that won't stay dimmed can be diagnosed without devtools */
   idleDebug: boolean;
@@ -157,6 +161,7 @@ function defaults(): AppSettings {
     screensaver: false,
     screensaverBrightness: 35,
     screensaverSpeed: 3,
+    screensaverIntensity: 'medium',
     idleDebug: false,
     weather: { entityId: null },
     presence: { personIds: null },
@@ -350,6 +355,12 @@ function normalize(raw: unknown): AppSettings {
       typeof r.screensaverSpeed === 'number' && Number.isFinite(r.screensaverSpeed)
         ? Math.min(Math.max(Math.round(r.screensaverSpeed), 1), 10)
         : base.screensaverSpeed,
+    screensaverIntensity:
+      r.screensaverIntensity === 'low' ||
+      r.screensaverIntensity === 'medium' ||
+      r.screensaverIntensity === 'high'
+        ? r.screensaverIntensity
+        : base.screensaverIntensity,
     idleDebug: r.idleDebug === true,
     weather: {
       entityId:

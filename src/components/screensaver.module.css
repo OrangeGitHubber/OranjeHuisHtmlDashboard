@@ -11,6 +11,26 @@
   overflow: hidden;
   pointer-events: none; /* taps pass through to window listeners, which wake */
   animation: ss-fade 1.6s ease both;
+  /* intensity knobs (default = medium). blur radius and blend mode are the
+     expensive bits on a weak GPU, so lower levels shrink the disc, cut blur,
+     and drop the blend. See data-intensity overrides below and the reduced
+     layer count in Screensaver.tsx. */
+  --ss-disc-size: 150vmax;
+  --ss-disc-blur: 30px;
+  --ss-blob-blur: 30px;
+  --ss-blend: normal;
+}
+
+.screensaver[data-intensity='low'] {
+  --ss-disc-size: 120vmax;
+  --ss-disc-blur: 16px;
+}
+
+.screensaver[data-intensity='high'] {
+  --ss-disc-size: 170vmax;
+  --ss-disc-blur: 48px;
+  --ss-blob-blur: 44px;
+  --ss-blend: screen;
 }
 
 @keyframes ss-fade {
@@ -46,9 +66,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 170vmax;
-  height: 170vmax;
-  margin: -85vmax 0 0 -85vmax;
+  width: var(--ss-disc-size);
+  height: var(--ss-disc-size);
+  margin: calc(var(--ss-disc-size) / -2) 0 0 calc(var(--ss-disc-size) / -2);
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
@@ -59,7 +79,7 @@
     rgba(18, 185, 134, 0.33),
     color-mix(in srgb, var(--accent) 70%, transparent)
   );
-  filter: blur(48px);
+  filter: blur(var(--ss-disc-blur));
   animation: ss-spin calc(60s / var(--ss-speed, 3)) linear infinite;
   will-change: transform;
 }
@@ -76,8 +96,8 @@
   width: 62vmin;
   height: 62vmin;
   border-radius: 50%;
-  filter: blur(44px);
-  mix-blend-mode: screen;
+  filter: blur(var(--ss-blob-blur));
+  mix-blend-mode: var(--ss-blend);
   will-change: transform;
 }
 

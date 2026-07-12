@@ -77,7 +77,11 @@ export function Shell() {
         />
       )}
       {showSaver && (
-        <Screensaver brightness={s.screensaverBrightness} speed={s.screensaverSpeed} />
+        <Screensaver
+          brightness={s.screensaverBrightness}
+          speed={s.screensaverSpeed}
+          intensity={s.screensaverIntensity}
+        />
       )}
       {s.idleDebug && <IdleDebugOverlay nightActive={nightDim || showSaver} />}
     </div>
