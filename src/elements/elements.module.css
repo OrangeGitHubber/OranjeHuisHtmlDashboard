@@ -166,7 +166,8 @@
 }
 
 .clockDate {
-  font-size: 0.85rem;
+  /* scales with the clock's Text size knob (see --clock-scale in ClockCard) */
+  font-size: calc(0.85rem * var(--clock-scale, 1));
   color: var(--text-dim);
 }
 

@@ -1,6 +1,8 @@
 import { Modal } from '../components/Modal';
 import { updateElementOptions, removeElement } from '../lib/settings';
 import { CardOpacityRow } from './CardOpacityRow';
+import { TextSizeRow } from './TextSizeRow';
+import { DEFAULT_FONT_SCALE } from '../lib/fontSizePresets';
 import type { EditorProps } from './domainOptionsEditor';
 import opt from '../components/options.module.css';
 
@@ -11,6 +13,9 @@ export interface ClockOptions {
   color?: string;
   /** hide on phones (<700px); undefined defaults to hidden for the clock */
   hideOnMobile?: boolean;
+  /** text-size multiplier (percent, 50–200; 100 = default) on top of the
+      Auto/S/M/L/XL size */
+  fontScale?: number;
 }
 
 const SIZES: { id: ClockOptions['size']; label: string }[] = [
@@ -23,6 +28,7 @@ const SIZES: { id: ClockOptions['size']; label: string }[] = [
 
 export default function ClockOptionsEditor({ pageId, element, onClose }: EditorProps) {
   const o = (element.options ?? {}) as ClockOptions;
+  const fontScale = typeof o.fontScale === 'number' ? o.fontScale : DEFAULT_FONT_SCALE;
   const set = (patch: Partial<ClockOptions>) => updateElementOptions(pageId, element.id, patch);
 
   return (
@@ -48,6 +54,7 @@ export default function ClockOptionsEditor({ pageId, element, onClose }: EditorP
             ))}
           </div>
         </div>
+        <TextSizeRow scale={fontScale} onChange={(pct) => set({ fontScale: pct })} />
         <div class={opt.row}>
           Color
           <div class={opt.seg}>

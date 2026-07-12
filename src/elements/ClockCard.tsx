@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { fontScaleOf } from '../lib/fontSizePresets';
 import type { ElementProps } from '../grid/elements';
 import type { ClockOptions } from './ClockOptionsEditor';
 import styles from './elements.module.css';
@@ -46,13 +47,22 @@ export default function ClockCard({ element }: ElementProps) {
   }, []);
 
   const autoPx = Math.min(Math.max(width * 0.17, 20), 120);
+  // the base size (auto width-based or a fixed preset) is multiplied by the
+  // Text size knob via --clock-scale; the date line (in CSS) uses the same
+  // variable so the whole clock scales together
+  const scale = fontScaleOf(o.fontScale);
+  const base = o.size && FONT_SIZES[o.size] ? FONT_SIZES[o.size] : `${Math.round(autoPx)}px`;
   const timeStyle: Record<string, string> = {
-    fontSize: o.size && FONT_SIZES[o.size] ? FONT_SIZES[o.size] : `${Math.round(autoPx)}px`,
+    fontSize: `calc(${base} * var(--clock-scale, 1))`,
   };
   if (typeof o.color === 'string' && o.color) timeStyle.color = o.color;
 
   return (
-    <div ref={cardRef} class={`${styles.card} ${styles.clockCard}`}>
+    <div
+      ref={cardRef}
+      class={`${styles.card} ${styles.clockCard}`}
+      style={{ '--clock-scale': String(scale) } as Record<string, string>}
+    >
       <span class={styles.clockTime} style={timeStyle}>
         {now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
       </span>
