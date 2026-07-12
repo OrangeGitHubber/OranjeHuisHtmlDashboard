@@ -10,6 +10,18 @@ export default function SettingsView() {
   const s = settings.value;
   const cfg = serverConfig.value;
 
+  // night dimming and the screensaver are mutually exclusive (a screensaver
+  // fully covers the dashboard, so a dim layer under it would do nothing) —
+  // present them as one either/or choice. Derived from the two underlying
+  // flags; screensaver wins if a legacy config somehow has both set.
+  const nightMode: 'off' | 'dim' | 'saver' = s.screensaver
+    ? 'saver'
+    : s.nightDim
+      ? 'dim'
+      : 'off';
+  const setNightMode = (m: 'off' | 'dim' | 'saver') =>
+    updateSettings({ nightDim: m === 'dim', screensaver: m === 'saver' });
+
   return (
     <div class={styles.page}>
       <h1 class={`view-title ${styles.pageTitle}`}>Settings</h1>
@@ -135,25 +147,30 @@ export default function SettingsView() {
 
       <section class={styles.section}>
         <h2>Night dimming &amp; screensaver</h2>
-        <label class={styles.checkItem}>
-          <input
-            type="checkbox"
-            checked={s.nightDim}
-            onChange={(e) => updateSettings({ nightDim: (e.target as HTMLInputElement).checked })}
-          />
-          Dim the display at night
-        </label>
-        <label class={styles.checkItem}>
-          <input
-            type="checkbox"
-            checked={s.screensaver}
-            onChange={(e) =>
-              updateSettings({ screensaver: (e.target as HTMLInputElement).checked })
-            }
-          />
-          Show a swirling screensaver at night (burn-in protection)
-        </label>
-        {(s.nightDim || s.screensaver) && (
+        <div class={styles.modeRow}>
+          {(
+            [
+              ['off', 'Off'],
+              ['dim', 'Dim display'],
+              ['saver', 'Screensaver'],
+            ] as const
+          ).map(([m, label]) => (
+            <button
+              key={m}
+              class={`${styles.modeBtn}${nightMode === m ? ` ${styles.modeActive}` : ''}`}
+              onClick={() => setNightMode(m)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p class={styles.dim}>
+          At night you can either <strong>dim</strong> the dashboard (darkened but still visible)
+          or show a <strong>swirling screensaver</strong> that fully covers it — the screensaver
+          keeps bright pixels moving to protect an always-on screen from burn-in. They can't both
+          run at once, so this is one either/or choice.
+        </p>
+        {nightMode !== 'off' && (
           <>
             <div class={styles.fieldRow}>
               <label class={styles.field}>
@@ -192,7 +209,7 @@ export default function SettingsView() {
                 />
               </label>
             </div>
-            {s.nightDim && (
+            {nightMode === 'dim' && (
               <div class={styles.fieldRow}>
                 <label class={styles.field}>
                   Dim %
@@ -211,7 +228,7 @@ export default function SettingsView() {
                 </label>
               </div>
             )}
-            {s.screensaver && (
+            {nightMode === 'saver' && (
               <div class={styles.fieldRow}>
                 <label class={styles.field}>
                   Screensaver brightness %
@@ -248,10 +265,8 @@ export default function SettingsView() {
               </div>
             )}
             <p class={styles.dim}>
-              Both use the same night window and clear on any touch, mouse or keyboard activity,
-              returning after the inactivity timeout. The screensaver fully covers the dashboard
-              with a slow moving pattern — it keeps bright pixels drifting to protect always-on
-              screens (like a wall-mounted TV) from burn-in.
+              Runs during the window above and clears on any touch, mouse or keyboard activity,
+              returning after the inactivity timeout.
             </p>
           </>
         )}
