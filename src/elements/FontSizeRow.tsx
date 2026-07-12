@@ -25,18 +25,34 @@ export function FontSizeRow<B extends string>({
   return (
     <div class={opt.row}>
       {label}
-      <div class={opt.seg}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${buckets.length}, minmax(0, 1fr))`,
+          gap: 8,
+        }}
+      >
         {buckets.map(({ key, label: bLabel }) => (
           <label
             key={key}
             title={bLabel}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+            style={{ display: 'grid', gap: 5, justifyItems: 'stretch', textAlign: 'center' }}
           >
-            <span style={{ fontSize: '0.68rem', textTransform: 'uppercase' }}>{key}</span>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'var(--text-dim)',
+              }}
+            >
+              {key}
+            </span>
             <input
               type="number"
               class={opt.num}
-              style={{ width: 56 }}
+              style={{ width: '100%', textAlign: 'center', padding: '9px 6px' }}
               min={6}
               max={72}
               value={sizes[key]}
