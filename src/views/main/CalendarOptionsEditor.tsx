@@ -4,20 +4,13 @@ import { useEntitiesByDomain } from '../../lib/ha/entities';
 import { friendlyName } from '../settings/EntitySelect';
 import { pageIcons } from '../../lib/icons';
 import { CardOpacityRow, CardTitleRow } from '../../elements/CardOpacityRow';
-import { FontSizeRow } from '../../elements/FontSizeRow';
+import { TextSizeRow } from '../../elements/TextSizeRow';
 import { calendarColor } from './useCalendarEvents';
-import { DEFAULT_DAY_FONT_SIZES, DEFAULT_AGENDA_FONT_SIZES } from './WeekCalendar';
+import { DEFAULT_FONT_SCALE } from '../../lib/fontSizePresets';
 import type { GridElement } from '../../grid/types';
-import type { CalendarOptions, DayBucket } from './WeekCalendar';
+import type { CalendarOptions } from './WeekCalendar';
 import opt from '../../components/options.module.css';
 import styles from './main.module.css';
-
-const BUCKETS: { key: DayBucket; label: string }[] = [
-  { key: 'xs', label: 'Smallest' },
-  { key: 'sm', label: 'Small' },
-  { key: 'md', label: 'Medium' },
-  { key: 'lg', label: 'Large' },
-];
 
 /**
  * Per-instance settings for a calendar element (gear badge / tap in page
@@ -35,8 +28,7 @@ export default function CalendarOptionsEditor({
   const o = (element.options ?? {}) as CalendarOptions;
   const calendarEntities = useEntitiesByDomain('calendar').value;
   const mode = o.mode === 'agenda' ? 'agenda' : 'week';
-  const dayFontSizes = { ...DEFAULT_DAY_FONT_SIZES, ...(o.dayFontSizes ?? {}) };
-  const agendaFontSizes = { ...DEFAULT_AGENDA_FONT_SIZES, ...(o.agendaFontSizes ?? {}) };
+  const fontScale = typeof o.fontScale === 'number' ? o.fontScale : DEFAULT_FONT_SCALE;
 
   const set = (patch: Partial<CalendarOptions>) =>
     updateElementOptions(pageId, element.id, patch);
@@ -157,15 +149,6 @@ export default function CalendarOptionsEditor({
                 </button>
               </div>
             </div>
-            <FontSizeRow
-              label="Day column text size (px)"
-              buckets={BUCKETS}
-              sizes={dayFontSizes}
-              defaults={DEFAULT_DAY_FONT_SIZES}
-              onChange={(bucket, v) => set({ dayFontSizes: { ...dayFontSizes, [bucket]: v } })}
-              onReset={() => set({ dayFontSizes: undefined })}
-              hint="Picked from a day column's own width — a size much bigger than what its bucket was tuned for can crowd the header if the column is ever narrower."
-            />
           </>
         )}
 
@@ -226,15 +209,6 @@ export default function CalendarOptionsEditor({
                 whole card, which can look gappy on a tall widget with few entries.
               </span>
             </div>
-            <FontSizeRow
-              label="Entry text size (px)"
-              buckets={BUCKETS}
-              sizes={agendaFontSizes}
-              defaults={DEFAULT_AGENDA_FONT_SIZES}
-              onChange={(bucket, v) => set({ agendaFontSizes: { ...agendaFontSizes, [bucket]: v } })}
-              onReset={() => set({ agendaFontSizes: undefined })}
-              hint="Picked from the entry list's own width — a size much bigger than what its bucket was tuned for can wrap onto extra lines if the widget is ever narrower."
-            />
           </>
         )}
 
@@ -329,6 +303,7 @@ export default function CalendarOptionsEditor({
           </div>
         </div>
 
+        <TextSizeRow scale={fontScale} onChange={(pct) => set({ fontScale: pct })} />
         <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>

@@ -3,7 +3,7 @@ import { settings } from '../../../lib/settings';
 import { useForecast } from './useForecast';
 import { conditionIcon, conditionLabel } from './weatherIcons';
 import { useElementSize } from '../../../lib/useElementSize';
-import { sanitizeFontSize } from '../../../lib/fontSizePresets';
+import { fontScaleOf } from '../../../lib/fontSizePresets';
 import type { ForecastItem } from '../../../lib/ha/forecast';
 import type { ElementProps } from '../../../grid/elements';
 import styles from './weather.module.css';
@@ -97,11 +97,7 @@ export default function WeatherWidget({ element }: ElementProps) {
   const { ref, size } = useElementSize<HTMLDivElement>();
   const bucket = weatherBucket(size.width, size.height);
 
-  const rawFontSizes = element.options?.fontSizes as Partial<Record<WeatherBucket, number>> | undefined;
-  const fontPx = sanitizeFontSize(
-    rawFontSizes && typeof rawFontSizes === 'object' ? rawFontSizes[bucket] : undefined,
-    DEFAULT_WEATHER_FONT_SIZES[bucket],
-  );
+  const fontPx = Math.round(DEFAULT_WEATHER_FONT_SIZES[bucket] * fontScaleOf(element.options?.fontScale));
   const cardStyle = { fontSize: `calc(${fontPx}px * var(--ui-scale, 1))` };
 
   // xs is tight enough that even the smallest readable text can't fit all

@@ -3,7 +3,7 @@ import { settings } from '../../../lib/settings';
 import { navigate } from '../../../lib/router';
 import { PersonCard } from '../../people/PersonCard';
 import { useElementSize } from '../../../lib/useElementSize';
-import { sanitizeFontSize } from '../../../lib/fontSizePresets';
+import { fontScaleOf } from '../../../lib/fontSizePresets';
 import type { ElementProps } from '../../../grid/elements';
 import styles from './presence.module.css';
 
@@ -57,10 +57,9 @@ export interface PresenceOptions {
   showAddress?: boolean;
   /** show when each person's device last checked in */
   showLastSeen?: boolean;
-  /** per-bucket px override for the "Family" title text */
-  titleFontSizes?: Partial<Record<PresenceBucket, number>>;
-  /** per-bucket px override for the "3/4 home" count badge */
-  countFontSizes?: Partial<Record<PresenceBucket, number>>;
+  /** text-size multiplier (percent, 50–200; 100 = default) applied to the
+      auto-fitted title/count sizes */
+  fontScale?: number;
 }
 
 export default function PresenceWidget({ element }: ElementProps) {
@@ -71,8 +70,9 @@ export default function PresenceWidget({ element }: ElementProps) {
   const home = shown.filter((p) => p.state === 'home').length;
   const { ref, size } = useElementSize<HTMLDivElement>();
   const bucket = presenceBucket(size.width, size.height);
-  const titlePx = sanitizeFontSize(o.titleFontSizes?.[bucket], DEFAULT_PRESENCE_TITLE_FONT_SIZES[bucket]);
-  const countPx = sanitizeFontSize(o.countFontSizes?.[bucket], DEFAULT_PRESENCE_COUNT_FONT_SIZES[bucket]);
+  const scale = fontScaleOf(o.fontScale);
+  const titlePx = Math.round(DEFAULT_PRESENCE_TITLE_FONT_SIZES[bucket] * scale);
+  const countPx = Math.round(DEFAULT_PRESENCE_COUNT_FONT_SIZES[bucket] * scale);
 
   return (
     <div class={styles.card} ref={ref} data-bucket={bucket}>

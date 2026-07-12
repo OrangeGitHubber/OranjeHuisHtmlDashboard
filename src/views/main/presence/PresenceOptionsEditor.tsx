@@ -3,21 +3,11 @@ import { settings, updateElementOptions, removeElement } from '../../../lib/sett
 import { useEntitiesByDomain } from '../../../lib/ha/entities';
 import { friendlyName } from '../../settings/EntitySelect';
 import { CardOpacityRow, CardTitleRow } from '../../../elements/CardOpacityRow';
-import { FontSizeRow } from '../../../elements/FontSizeRow';
-import {
-  DEFAULT_PRESENCE_TITLE_FONT_SIZES,
-  DEFAULT_PRESENCE_COUNT_FONT_SIZES,
-} from './PresenceWidget';
+import { TextSizeRow } from '../../../elements/TextSizeRow';
+import { DEFAULT_FONT_SCALE } from '../../../lib/fontSizePresets';
 import type { GridElement } from '../../../grid/types';
-import type { PresenceOptions, PresenceBucket } from './PresenceWidget';
+import type { PresenceOptions } from './PresenceWidget';
 import opt from '../../../components/options.module.css';
-
-const BUCKETS: { key: PresenceBucket; label: string }[] = [
-  { key: 'xs', label: 'Smallest' },
-  { key: 'sm', label: 'Small' },
-  { key: 'md', label: 'Medium' },
-  { key: 'lg', label: 'Large' },
-];
 
 export default function PresenceOptionsEditor({
   pageId,
@@ -29,8 +19,7 @@ export default function PresenceOptionsEditor({
   onClose: () => void;
 }) {
   const o = (element.options ?? {}) as PresenceOptions;
-  const titleSizes = { ...DEFAULT_PRESENCE_TITLE_FONT_SIZES, ...(o.titleFontSizes ?? {}) };
-  const countSizes = { ...DEFAULT_PRESENCE_COUNT_FONT_SIZES, ...(o.countFontSizes ?? {}) };
+  const fontScale = typeof o.fontScale === 'number' ? o.fontScale : DEFAULT_FONT_SCALE;
   const people = useEntitiesByDomain('person').value;
   const sensors = useEntitiesByDomain('sensor').value;
   // companion-app activity sensors ("Activity" on iOS, "Detected activity" on Android)
@@ -229,22 +218,7 @@ export default function PresenceOptionsEditor({
           </p>
         )}
 
-        <FontSizeRow
-          label="Title text size (px)"
-          buckets={BUCKETS}
-          sizes={titleSizes}
-          defaults={DEFAULT_PRESENCE_TITLE_FONT_SIZES}
-          onChange={(bucket, v) => set({ titleFontSizes: { ...titleSizes, [bucket]: v } })}
-          onReset={() => set({ titleFontSizes: undefined })}
-        />
-        <FontSizeRow
-          label="Count badge text size (px)"
-          buckets={BUCKETS}
-          sizes={countSizes}
-          defaults={DEFAULT_PRESENCE_COUNT_FONT_SIZES}
-          onChange={(bucket, v) => set({ countFontSizes: { ...countSizes, [bucket]: v } })}
-          onReset={() => set({ countFontSizes: undefined })}
-        />
+        <TextSizeRow scale={fontScale} onChange={(pct) => set({ fontScale: pct })} />
         <CardTitleRow pageId={pageId} element={element} />
         <CardOpacityRow pageId={pageId} element={element} />
         <div class={opt.footerRow}>

@@ -3,19 +3,12 @@ import { updateElementOptions, removeElement } from '../lib/settings';
 import { useEntitiesByDomain } from '../lib/ha/entities';
 import { friendlyName } from '../views/settings/EntitySelect';
 import { CardOpacityRow, CardTitleRow } from './CardOpacityRow';
-import { FontSizeRow } from './FontSizeRow';
-import { DEFAULT_WEATHER_FONT_SIZES } from '../views/main/weather/WeatherWidget';
-import type { WeatherBucket } from '../views/main/weather/WeatherWidget';
+import { TextSizeRow } from './TextSizeRow';
+import { DEFAULT_FONT_SCALE } from '../lib/fontSizePresets';
 import type { EditorProps } from './domainOptionsEditor';
 import opt from '../components/options.module.css';
 
 const DAY_CHOICES = [3, 4, 5, 6, 7];
-const BUCKETS: { key: WeatherBucket; label: string }[] = [
-  { key: 'xs', label: 'Smallest' },
-  { key: 'sm', label: 'Small' },
-  { key: 'md', label: 'Medium' },
-  { key: 'lg', label: 'Large' },
-];
 
 export default function WeatherOptionsEditor({ pageId, element, onClose }: EditorProps) {
   const entities = useEntitiesByDomain('weather').value;
@@ -23,8 +16,8 @@ export default function WeatherOptionsEditor({ pageId, element, onClose }: Edito
   const current = typeof rawId === 'string' ? rawId : '';
   const rawDays = element.options?.forecastDays;
   const days = typeof rawDays === 'number' ? rawDays : 5;
-  const rawFontSizes = element.options?.fontSizes as Partial<Record<WeatherBucket, number>> | undefined;
-  const fontSizes = { ...DEFAULT_WEATHER_FONT_SIZES, ...(rawFontSizes ?? {}) };
+  const rawScale = element.options?.fontScale;
+  const fontScale = typeof rawScale === 'number' ? rawScale : DEFAULT_FONT_SCALE;
   const rawDropHourly = element.options?.dropHourlyAtXs;
   const dropHourlyAtXs = typeof rawDropHourly === 'boolean' ? rawDropHourly : true;
   const set = (patch: Record<string, unknown>) =>
@@ -70,15 +63,7 @@ export default function WeatherOptionsEditor({ pageId, element, onClose }: Edito
             ))}
           </div>
         </div>
-        <FontSizeRow
-          label="Text size by widget size (px)"
-          buckets={BUCKETS}
-          sizes={fontSizes}
-          defaults={DEFAULT_WEATHER_FONT_SIZES}
-          onChange={(bucket, v) => set({ fontSizes: { ...fontSizes, [bucket]: v } })}
-          onReset={() => set({ fontSizes: undefined })}
-          hint="Widget picks one of these four sizes based on its current width/height — a size much bigger than what its bucket was tuned for can overflow if the widget is ever resized smaller."
-        />
+        <TextSizeRow scale={fontScale} onChange={(pct) => set({ fontScale: pct })} />
         <div class={opt.row}>
           Hourly forecast at smallest size
           <div class={opt.seg}>

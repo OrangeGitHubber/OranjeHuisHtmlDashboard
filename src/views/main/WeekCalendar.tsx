@@ -4,7 +4,7 @@ import { settings } from '../../lib/settings';
 import { pageIcons } from '../../lib/icons';
 import { useMediaQuery } from '../../lib/useMediaQuery';
 import { useElementSize } from '../../lib/useElementSize';
-import { sanitizeFontSize } from '../../lib/fontSizePresets';
+import { fontScaleOf } from '../../lib/fontSizePresets';
 import { ClampedList } from '../../components/ClampedList';
 import type { CalendarEvent } from '../../lib/types';
 import type { ElementProps } from '../../grid/elements';
@@ -84,20 +84,18 @@ export interface CalendarOptions {
       consistent gap) — "fill" looks stretched/gappy on a tall widget with
       few entries, but some may still prefer it for short lists. */
   agendaFill?: boolean;
-  /** per-bucket px override for day-board columns (week mode) */
-  dayFontSizes?: Partial<Record<DayBucket, number>>;
-  /** per-bucket px override for agenda entries (agenda mode) */
-  agendaFontSizes?: Partial<Record<DayBucket, number>>;
+  /** text-size multiplier (percent, 50–200; 100 = default) applied to the
+      auto-fitted day-column / agenda-entry sizes */
+  fontScale?: number;
 }
 
 export type EntryMarker = 'hide' | 'dot' | 'bar';
 
-// dayFontSizes/agendaFontSizes are read separately (as partial per-bucket
-// overrides merged over their own DEFAULT_* maps in WeekCalendar), not
-// resolved to a single value here like the rest of these options
+// fontScale is read separately in WeekCalendar (applied as a multiplier to
+// the bucket defaults), not resolved to a single value here like the rest
 export function calendarOptionsOf(
   element: ElementProps['element'],
-): Required<Omit<CalendarOptions, 'dayFontSizes' | 'agendaFontSizes'>> {
+): Required<Omit<CalendarOptions, 'fontScale'>> {
   const o = (element.options ?? {}) as CalendarOptions;
   const mode = o.mode === 'agenda' ? 'agenda' : 'week';
   return {
@@ -194,9 +192,7 @@ function agoLabel(lastFetched: number): string {
 
 export function WeekCalendar({ element }: ElementProps) {
   const opt = calendarOptionsOf(element);
-  const rawOptions = (element.options ?? {}) as CalendarOptions;
-  const dayFontSizes = { ...DEFAULT_DAY_FONT_SIZES, ...(rawOptions.dayFontSizes ?? {}) };
-  const agendaFontSizes = { ...DEFAULT_AGENDA_FONT_SIZES, ...(rawOptions.agendaFontSizes ?? {}) };
+  const scale = fontScaleOf((element.options as CalendarOptions | undefined)?.fontScale);
   const windowDays = opt.mode === 'agenda' ? AGENDA_WINDOW_DAYS : opt.days;
   const { events, loading, error, lastFetched, refresh } = useCalendarEvents(
     windowDays,
@@ -242,7 +238,7 @@ export function WeekCalendar({ element }: ElementProps) {
           loading={loading}
           marker={opt.marker}
           fill={opt.agendaFill}
-          fontSizes={agendaFontSizes}
+          scale={scale}
         />
       ) : (
         <WeekBoard
@@ -252,7 +248,7 @@ export function WeekCalendar({ element }: ElementProps) {
           loading={loading}
           marker={opt.marker}
           narrow={narrow}
-          fontSizes={dayFontSizes}
+          scale={scale}
         />
       )}
     </section>
@@ -276,7 +272,7 @@ function WeekBoard({
   loading,
   marker,
   narrow,
-  fontSizes,
+  scale,
 }: {
   events: CalendarEvent[];
   days: number;
@@ -284,7 +280,7 @@ function WeekBoard({
   loading: boolean;
   marker: EntryMarker;
   narrow: boolean;
-  fontSizes: Record<DayBucket, number>;
+  scale: number;
 }) {
   const board = buildDays(events, days);
   const stacked = vertical || narrow;
@@ -303,7 +299,7 @@ function WeekBoard({
       ? (gridSize.width - GRID_GAP * (days - 1)) / days
       : gridSize.width;
   const bucket = dayBucket(perDayWidth);
-  const fontPx = sanitizeFontSize(fontSizes[bucket], DEFAULT_DAY_FONT_SIZES[bucket]);
+  const fontPx = Math.round(DEFAULT_DAY_FONT_SIZES[bucket] * scale);
   const dayStyle = { fontSize: `calc(${fontPx}px * var(--ui-scale, 1))` };
 
   const dayEventItems = (day: Day) =>
@@ -396,21 +392,21 @@ function AgendaList({
   loading,
   marker,
   fill,
-  fontSizes,
+  scale,
 }: {
   events: CalendarEvent[];
   count: number;
   loading: boolean;
   marker: EntryMarker;
   fill: boolean;
-  fontSizes: Record<DayBucket, number>;
+  scale: number;
 }) {
   const now = new Date();
   const upcoming = events.filter((ev) => ev.end > now).slice(0, count);
   const agendaClass = `${styles.agenda}${fill ? ` ${styles.agendaFill}` : ''}`;
   const [width, setWidth] = useState(0);
   const bucket = dayBucket(width);
-  const fontPx = sanitizeFontSize(fontSizes[bucket], DEFAULT_AGENDA_FONT_SIZES[bucket]);
+  const fontPx = Math.round(DEFAULT_AGENDA_FONT_SIZES[bucket] * scale);
   const agendaStyle = { fontSize: `calc(${fontPx}px * var(--ui-scale, 1))` };
 
   if (loading && events.length === 0) {
