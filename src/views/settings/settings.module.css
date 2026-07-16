@@ -1,21 +1,35 @@
+/* an aligned two-column grid (collapsing to one) rather than CSS masonry —
+   masonry flowed sections column-by-column with an unpredictable order and
+   read as a scattered wall of boxes; a grid keeps a natural left-to-right,
+   top-to-bottom reading order and tidy alignment. Group labels and the page
+   title span both columns to band the groups. */
 .page {
   max-width: 1100px;
-  column-width: 360px;
-  column-gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
 }
 
 .pageTitle {
-  column-span: all;
+  grid-column: 1 / -1;
+  margin-bottom: 4px;
 }
 
 .groupLabel {
-  column-span: all;
+  grid-column: 1 / -1;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
-  margin: 22px 0 8px;
+  margin: 14px 0 0;
 }
 
 .groupLabel:first-of-type {
@@ -26,17 +40,17 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 20px;
   display: grid;
-  gap: 12px;
-  margin: 0 0 16px;
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
+  gap: 14px;
+  align-content: start;
+  margin: 0;
 }
 
 .section h2 {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 650;
+  margin-bottom: 2px;
 }
 
 .dim {
