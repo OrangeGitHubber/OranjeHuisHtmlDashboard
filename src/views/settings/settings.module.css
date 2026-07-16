@@ -1,56 +1,213 @@
-/* an aligned two-column grid (collapsing to one) rather than CSS masonry —
-   masonry flowed sections column-by-column with an unpredictable order and
-   read as a scattered wall of boxes; a grid keeps a natural left-to-right,
-   top-to-bottom reading order and tidy alignment. Group labels and the page
-   title span both columns to band the groups. */
-.page {
-  max-width: 1100px;
+/* ---------- two-pane settings: category nav + focused panel ---------- */
+
+.shell {
+  max-width: 940px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 20px;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 20px;
   align-items: start;
 }
 
-@media (max-width: 760px) {
-  .page {
-    grid-template-columns: 1fr;
-  }
+.nav {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 10px;
 }
 
-.pageTitle {
-  grid-column: 1 / -1;
-  margin-bottom: 4px;
-}
-
-.groupLabel {
-  grid-column: 1 / -1;
+.navTitle {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
-  margin: 14px 0 0;
+  margin: 4px 8px 10px;
 }
 
-.groupLabel:first-of-type {
-  margin-top: 0;
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
 }
 
-.section {
+.navItem svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+}
+
+.navItem:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.navActive,
+.navActive:hover {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.panel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
-  display: grid;
-  gap: 14px;
-  align-content: start;
-  margin: 0;
+  padding: 22px 24px 24px;
+  min-height: 60vh;
 }
 
-.section h2 {
-  font-size: 1.05rem;
+.panelTitle {
+  font-size: 1.25rem;
   font-weight: 650;
-  margin-bottom: 2px;
+  margin: 0 0 18px;
+}
+
+.rows {
+  display: grid;
+  gap: 4px;
+}
+
+/* one setting: label left, control right, hairline divider between rows */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.rows > .row:first-child {
+  border-top: none;
+}
+
+.rowLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.92rem;
+  min-width: 0;
+}
+
+.rowLabel small {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.rowControl {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* toggle switch (replaces bare checkboxes) */
+.sw {
+  width: 42px;
+  height: 24px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 999px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sw::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.swOn {
+  background: var(--accent);
+}
+
+.swOn::after {
+  transform: translateX(18px);
+}
+
+.slider {
+  width: 190px;
+  max-width: 46vw;
+  accent-color: var(--accent);
+}
+
+.colorInput {
+  width: 40px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+/* stacked form field (text/number/time inputs): label above the control */
+.stackField {
+  display: grid;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  padding: 8px 0;
+}
+
+.stackField input {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.stackField input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px;
+  }
+
+  .navTitle {
+    display: none;
+  }
+
+  .navItem {
+    white-space: nowrap;
+  }
 }
 
 .dim {
