@@ -18,6 +18,7 @@ export const themes: ThemeDef[] = [
   { id: 'forest', name: 'Forest', swatch: '#7cb567' },
   { id: 'ocean', name: 'Ocean', swatch: '#54a6c9' },
   { id: 'plum', name: 'Plum', swatch: '#b98ad9' },
+  { id: 'white', name: 'Snow', swatch: '#f4f4f5' },
 ];
 
 export function applyTheme(id: string): void {

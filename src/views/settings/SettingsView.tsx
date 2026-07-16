@@ -1,4 +1,4 @@
-import { settings, updateSettings, setTheme } from '../../lib/settings';
+import { settings, updateSettings } from '../../lib/settings';
 import { themes } from '../../lib/themes';
 import { serverConfig, setupRequested } from '../../lib/config';
 import { PagesEditor } from './PagesEditor';
@@ -50,30 +50,53 @@ export default function SettingsView() {
       <p class={styles.groupLabel}>Appearance</p>
       <section class={styles.section}>
         <h2>Theme</h2>
-        <div class={styles.modeRow}>
-          {(['auto', 'dark', 'light'] as const).map((m) => (
-            <button
-              key={m}
-              class={`${styles.modeBtn}${s.colorMode === m ? ` ${styles.modeActive}` : ''}`}
-              onClick={() => updateSettings({ colorMode: m })}
-            >
-              {m === 'auto' ? 'Auto (device)' : m === 'dark' ? 'Dark' : 'Light'}
-            </button>
-          ))}
+        <div class={styles.field}>
+          Mode
+          <div class={styles.modeRow}>
+            {(['auto', 'dark', 'light'] as const).map((m) => (
+              <button
+                key={m}
+                class={`${styles.modeBtn}${s.colorMode === m ? ` ${styles.modeActive}` : ''}`}
+                onClick={() => updateSettings({ colorMode: m })}
+              >
+                {m === 'auto' ? 'Auto' : m === 'dark' ? 'Dark' : 'Light'}
+              </button>
+            ))}
+          </div>
         </div>
-        <div class={styles.themeRow}>
-          {themes.map((t) => (
-            <button
-              key={t.id}
-              class={`${styles.themeSwatch}${s.theme === t.id ? ` ${styles.themeActive}` : ''}`}
-              onClick={() => setTheme(t.id)}
-              aria-label={`Theme: ${t.name}`}
-              aria-pressed={s.theme === t.id}
+        <div class={styles.field}>
+          Accent color
+          <div class={styles.swatchRow}>
+            {themes.map((t) => {
+              const active = !s.accentColor && s.theme === t.id;
+              return (
+                <button
+                  key={t.id}
+                  class={`${styles.swatchChip}${active ? ` ${styles.swatchActive}` : ''}`}
+                  style={{ background: t.swatch }}
+                  onClick={() => updateSettings({ theme: t.id, accentColor: '' })}
+                  aria-label={`Accent: ${t.name}`}
+                  aria-pressed={active}
+                  title={t.name}
+                />
+              );
+            })}
+            <label
+              class={`${styles.swatchChip} ${styles.swatchCustom}${
+                s.accentColor ? ` ${styles.swatchActive}` : ''
+              }`}
+              style={s.accentColor ? { background: s.accentColor } : undefined}
+              title="Custom color"
             >
-              <span class={styles.themeDot} style={{ background: t.swatch }} />
-              {t.name}
-            </button>
-          ))}
+              {!s.accentColor && <span class={styles.swatchPlus} aria-hidden="true">+</span>}
+              <input
+                type="color"
+                value={s.accentColor || '#f28c28'}
+                onInput={(e) => updateSettings({ accentColor: (e.target as HTMLInputElement).value })}
+                aria-label="Custom accent color"
+              />
+            </label>
+          </div>
         </div>
       </section>
 

@@ -331,6 +331,74 @@
 
 /* theme picker */
 
+.swatchRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* circular accent chips: the colour is the whole control; the selected one
+   gets a ring drawn just outside it (knocked out from the surface) */
+.swatchChip {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s ease;
+}
+
+.swatchChip:hover {
+  transform: scale(1.08);
+}
+
+.swatchActive {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--accent);
+}
+
+/* custom-colour chip: a rainbow hint until a colour is chosen, wrapping a
+   hidden native colour input */
+.swatchCustom {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: conic-gradient(
+    from 0deg,
+    #f28c28,
+    #e0654a,
+    #b98ad9,
+    #54a6c9,
+    #7cb567,
+    #f28c28
+  );
+}
+
+.swatchPlus {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.swatchCustom input[type='color'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .themeRow {
   display: flex;
   gap: 8px;

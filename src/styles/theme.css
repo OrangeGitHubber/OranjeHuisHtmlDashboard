@@ -93,6 +93,13 @@
   --accent-dim: rgba(185, 138, 217, 0.16);
 }
 
+/* soft white accent (dark mode). Light-mode variant below is a charcoal so
+   the accent stays legible on a light background. */
+:root[data-theme='white'] {
+  --accent: #f4f4f5;
+  --accent-dim: rgba(244, 244, 245, 0.16);
+}
+
 /* light-mode accents per theme — OS-driven (unless dark is forced)… */
 @media (prefers-color-scheme: light) {
   :root:not([data-mode='dark'])[data-theme='ember'] {
@@ -113,6 +120,11 @@
   :root:not([data-mode='dark'])[data-theme='plum'] {
     --accent: #9260b8;
     --accent-dim: rgba(146, 96, 184, 0.14);
+  }
+
+  :root:not([data-mode='dark'])[data-theme='white'] {
+    --accent: #3a3a3c;
+    --accent-dim: rgba(58, 58, 60, 0.12);
   }
 }
 
@@ -135,4 +147,9 @@
 :root[data-mode='light'][data-theme='plum'] {
   --accent: #9260b8;
   --accent-dim: rgba(146, 96, 184, 0.14);
+}
+
+:root[data-mode='light'][data-theme='white'] {
+  --accent: #3a3a3c;
+  --accent-dim: rgba(58, 58, 60, 0.12);
 }

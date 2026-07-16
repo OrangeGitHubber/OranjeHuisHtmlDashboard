@@ -49,6 +49,9 @@ export interface AppSettings {
   pages: PageDef[];
   /** Theme id from src/lib/themes.ts; unknown ids fall back to orange visually. */
   theme: string;
+  /** custom accent color (any CSS hex) overriding the theme preset's accent;
+      '' = use the selected theme */
+  accentColor: string;
   /** light/dark handling: follow the OS or force one */
   colorMode: 'auto' | 'dark' | 'light';
   /** card/container background opacity in percent (30–100) */
@@ -145,6 +148,7 @@ function defaults(): AppSettings {
     subtitle: 'Smart Dashboard',
     pages: [defaultMainPage()],
     theme: 'orange',
+    accentColor: '',
     colorMode: 'auto',
     cardOpacity: 100,
     showTitles: true,
@@ -318,6 +322,7 @@ function normalize(raw: unknown): AppSettings {
     subtitle: typeof r.subtitle === 'string' ? r.subtitle : base.subtitle,
     pages,
     theme: typeof r.theme === 'string' && r.theme ? r.theme : base.theme,
+    accentColor: typeof r.accentColor === 'string' ? r.accentColor : '',
     colorMode: r.colorMode === 'light' || r.colorMode === 'dark' ? r.colorMode : 'auto',
     cardOpacity:
       typeof r.cardOpacity === 'number' && Number.isFinite(r.cardOpacity)
@@ -652,4 +657,16 @@ settings.subscribe((s) => {
   document.documentElement.style.setProperty('--ui-scale', String(s.uiScale / 100));
   if (s.titleColor) document.documentElement.style.setProperty('--title-color', s.titleColor);
   else document.documentElement.style.removeProperty('--title-color');
+  // a custom accent overrides the theme preset's --accent (and derives a
+  // matching translucent --accent-dim); cleared → fall back to the theme
+  if (s.accentColor) {
+    document.documentElement.style.setProperty('--accent', s.accentColor);
+    document.documentElement.style.setProperty(
+      '--accent-dim',
+      `color-mix(in srgb, ${s.accentColor} 16%, transparent)`,
+    );
+  } else {
+    document.documentElement.style.removeProperty('--accent');
+    document.documentElement.style.removeProperty('--accent-dim');
+  }
 });
